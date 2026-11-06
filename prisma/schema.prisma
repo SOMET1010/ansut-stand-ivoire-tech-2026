@@ -350,3 +350,101 @@ model AgentRun {
 
   @@map("agent_runs")
 }
+
+// ─── Jeux en direct : quiz et nuage de mots ──────────────────────────
+
+model Quiz {
+  id                String    @id @default(cuid())
+  title             String
+  /// Code à 6 chiffres saisi par les joueurs
+  code              String    @unique
+  /// LOBBY | QUESTION | REVEAL | FINISHED
+  status            String    @default("LOBBY")
+  currentIndex      Int       @default(-1)
+  questionStartedAt DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  questions QuizQuestion[]
+  players   QuizPlayer[]
+
+  @@map("quizzes")
+}
+
+model QuizQuestion {
+  id           String @id @default(cuid())
+  order        Int
+  text         String
+  /// JSON : tableau de 2 à 4 réponses
+  options      String
+  correctIndex Int
+  timeLimit    Int    @default(20)
+
+  quizId  String
+  quiz    Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  answers QuizAnswer[]
+
+  @@map("quiz_questions")
+}
+
+model QuizPlayer {
+  id        String   @id @default(cuid())
+  nickname  String
+  score     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  quizId  String
+  quiz    Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  answers QuizAnswer[]
+
+  @@unique([quizId, nickname])
+  @@map("quiz_players")
+}
+
+model QuizAnswer {
+  id         String   @id @default(cuid())
+  choice     Int
+  correct    Boolean
+  points     Int
+  answeredAt DateTime @default(now())
+
+  questionId String
+  question   QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  playerId   String
+  player     QuizPlayer   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, playerId])
+  @@map("quiz_answers")
+}
+
+/// Activité interactive en direct : nuage de mots, sondage, note, mur d'idées.
+model LiveActivity {
+  id        String   @id @default(cuid())
+  /// WORDCLOUD | POLL | SCALE | OPEN
+  type      String
+  prompt    String
+  /// JSON : choix du sondage (POLL uniquement)
+  options   String?
+  code      String   @unique
+  open      Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  responses LiveResponse[]
+
+  @@map("live_activities")
+}
+
+model LiveResponse {
+  id         String   @id @default(cuid())
+  /// mot, index du choix, note 1-5 ou texte libre selon le type
+  value      String
+  /// identifiant anonyme du téléphone (limite les réponses multiples)
+  voterId    String
+  createdAt  DateTime @default(now())
+
+  activityId String
+  activity   LiveActivity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@index([activityId])
+  @@map("live_responses")
+}

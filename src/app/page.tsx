@@ -16,6 +16,7 @@ export default function Home() {
       <SiteHeader>
         <Link href="/program" className="hidden px-3 py-2 font-medium text-itf-navy hover:underline sm:inline">Programme</Link>
         <Link href="/assistant" className="hidden px-3 py-2 font-medium text-itf-navy hover:underline sm:inline">Assistant</Link>
+        <Link href="/jouer" className="px-3 py-2 font-bold text-itf-orange hover:underline">Jouer</Link>
         {role === 'ORGANIZER' && <Button variant="outline" size="sm" asChild><Link href="/dashboard">Tableau de bord</Link></Button>}
         {role === 'ADMIN' && <Button variant="outline" size="sm" asChild><Link href="/admin">Administration</Link></Button>}
         {session ? (

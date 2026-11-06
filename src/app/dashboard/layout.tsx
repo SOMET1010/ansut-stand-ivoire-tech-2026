@@ -26,6 +26,11 @@ const organizerNavItems = [
     description: 'Invitations, présences, agents IA'
   },
   {
+    title: 'Animations',
+    href: '/dashboard/stand/animations',
+    description: 'Quiz, nuage de mots, sondages'
+  },
+  {
     title: 'Tableau de bord',
     href: '/dashboard',
     description: 'Vue d\'ensemble et statistiques'
@@ -152,7 +157,9 @@ export default function DashboardLayout({
                 pathname === `${item.href}/` ||
                 (item.href !== '/dashboard' &&
                   pathname.startsWith(`${item.href}/`) &&
-                  !pathname.includes('/[id]'));
+                  !pathname.includes('/[id]') &&
+                  // un lien plus précis (ex. /dashboard/stand/animations) l'emporte
+                  !organizerNavItems.some((o) => o.href.length > item.href.length && pathname.startsWith(o.href)));
 
               return (
                 <Link key={item.href} href={item.href}>

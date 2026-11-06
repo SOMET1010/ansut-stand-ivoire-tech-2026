@@ -28,6 +28,7 @@ export async function middleware(request: NextRequest) {
   // Si l'utilisateur n'est pas connecté et essaie d'accéder à une page protégée
   if (!token && (
     pathname.startsWith('/dashboard') || 
+    pathname.startsWith('/ecran') || 
     pathname.startsWith('/admin') || 
     pathname.startsWith('/events/create') ||
     pathname.startsWith('/admin-simple')
@@ -66,7 +67,7 @@ export async function middleware(request: NextRequest) {
     }
 
     // Protection des routes dashboard
-    if (pathname.startsWith('/dashboard') && userRole !== 'ORGANIZER' && userRole !== 'ADMIN') {
+    if ((pathname.startsWith('/dashboard') || pathname.startsWith('/ecran')) && userRole !== 'ORGANIZER' && userRole !== 'ADMIN') {
       logger.info('Access denied to dashboard route for role', { userRole })
       return NextResponse.redirect(new URL('/', request.url))
     }
@@ -84,6 +85,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/dashboard/:path*',
+    '/ecran/:path*',
     '/admin/:path*',
     '/admin-simple/:path*',
     '/events/create/:path*',

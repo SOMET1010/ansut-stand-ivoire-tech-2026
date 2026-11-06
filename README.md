@@ -12,6 +12,9 @@ Next.js 15 · React 19 · Prisma 6 · NextAuth · Tailwind 4 · SDK Anthropic.
 | **Assistant du stand** (`/assistant`) : répond sur le programme, enregistre les contacts | **Présences** par séquence + planche de QR codes à imprimer |
 | Questions en direct, sondages, attestations | **Agent de modération** : thèmes, doublons, 3 questions prioritaires |
 | | **Contacts** recueillis par l'assistant · **Bilan du jour** pour le DG |
+| **Jouer** (`/jouer` + code à 6 chiffres) | **Animations** (`/dashboard/stand/animations`) : création et écran de projection |
+| Quiz chronométré (points à la rapidité, classement) | Quiz : saisie manuelle ou **génération des questions par l'IA** |
+| Nuage de mots · Sondage · Note sur 5 · Mur d'idées | Écrans `/ecran/quiz/[id]` et `/ecran/activite/[id]` avec QR code |
 
 Règles : seul le rôle `ADMIN` (DG) valide un courrier ; un courrier ne peut être marqué envoyé qu'après validation ; toute modification d'un courrier validé le renvoie en validation.
 
@@ -27,6 +30,7 @@ cp .env.example .env          # renseigner NEXTAUTH_SECRET, comptes, ANTHROPIC_A
 npx prisma db push
 ORGANIZER_EMAIL=... ORGANIZER_PASSWORD=... npm run db:seed:itf2026   # événement + 11 séquences
 npx tsx scripts/import-invitations-itf2026.ts                       # partenaires (matrice privée)
+npx tsx scripts/seed-animations-itf2026.ts                          # quiz + 4 activités prêts
 npm run build && npx next start
 ```
 
