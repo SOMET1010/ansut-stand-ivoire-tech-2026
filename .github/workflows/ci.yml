@@ -9,6 +9,14 @@ on:
 jobs:
   lint-and-build:
     runs-on: ubuntu-latest
+    # Valeurs factices propres à la CI (aucun secret) : src/lib/auth.ts exige ces
+    # variables dès la compilation.
+    env:
+      NEXTAUTH_SECRET: ci-only-not-a-secret
+      NEXTAUTH_URL: http://localhost:3000
+      ADMIN_EMAIL: admin@ci.local
+      ADMIN_PASSWORD: ci-only-not-a-secret
+      DATABASE_URL: file:./ci.db
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
