@@ -1,37 +1,28 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import { Montserrat } from "next/font/google";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/components/auth/auth-provider";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
-  title: "PanelEvent - Plateforme de gestion d'événements",
-  description: "La plateforme unifiée pour la gestion d'événements, sessions interactives, questions en direct, sondages et attestations.",
-  keywords: ["PanelEvent", "événements", "gestion", "Q&A", "sondages", "attestations"],
-  authors: [{ name: "PanelEvent Team" }],
+  title: "Stand ANSUT · Ivoire Tech Forum 2026",
+  description: "Inscriptions, programme, questions en direct et sondages du stand ANSUT – Ivoire Tech Forum 2026, 11-13 novembre, Sofitel Hôtel Ivoire.",
+  keywords: ["ANSUT", "Ivoire Tech Forum", "ITF 2026", "service universel", "numérique", "Côte d'Ivoire"],
+  authors: [{ name: "ANSUT" }],
   openGraph: {
-    title: "PanelEvent",
-    description: "Plateforme de gestion d'événements interactive",
-    url: "https://panelevent.com",
-    siteName: "PanelEvent",
+    title: "Stand ANSUT · Ivoire Tech Forum 2026",
+    description: "Connecter le présent, bâtir le futur du numérique",
+    siteName: "ANSUT · ITF 2026",
     type: "website",
+    locale: "fr_CI",
   },
-  twitter: {
-    card: "summary_large_image",
-    title: "PanelEvent",
-    description: "Plateforme de gestion d'événements interactive",
-  },
+  icons: { icon: "/logo-ansut.jpeg" },
 };
 
 export default function RootLayout({
@@ -42,7 +33,7 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased min-h-screen bg-background text-foreground`}
+        className={`${montserrat.variable} font-sans antialiased min-h-screen bg-background text-foreground`}
         suppressHydrationWarning
       >
         <AuthProvider>

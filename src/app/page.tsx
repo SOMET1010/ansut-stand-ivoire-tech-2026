@@ -1,160 +1,120 @@
 "use client"
 
+import Link from 'next/link'
 import { useSession, signIn, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Calendar, Users, Clock, User, LogOut } from 'lucide-react'
-import { toast } from '@/hooks/use-toast'
+import { CalendarDays, MapPin, MessageSquare, BarChart3, Award, LogOut, ArrowRight, Clock } from 'lucide-react'
+import { SiteHeader, SiteFooter, ItfWordmark, AnsutLogo } from '@/components/brand/brand'
+import { EVENT, STAND_SESSIONS, PROGRAM_DAYS } from '@/config/event'
 
 export default function Home() {
-  const { data: session, status } = useSession()
-  const getRoleLabel = (role: string) => {
-    switch (role) {
-      case 'ADMIN': return 'Administrateur'
-      case 'ORGANIZER': return 'Organisateur'
-      case 'ATTENDEE': return 'Participant'
-      default: return role
-    }
-  }
-
-  const handleSignOut = async () => {
-    try {
-      await signOut({ callbackUrl: '/' })
-    } catch (error) {
-      console.error('Sign out error:', error)
-      toast({
-        title: 'Erreur lors de la déconnexion',
-        description: 'Veuillez réessayer.',
-        variant: 'destructive'
-      })
-    }
-  }
-
-  if (status === 'loading') {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    )
-  }
+  const { data: session } = useSession()
+  const role = session?.user?.role as string | undefined
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
-      {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold">P</span>
-              </div>
-              <h1 className="text-2xl font-bold">PanelEvent</h1>
-            </div>
-            <nav className="flex items-center space-x-4">
-              {session ? (
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2">
-                    <User className="w-4 h-4" />
-                    <span className="text-sm">
-                      {session.user?.name} ({getRoleLabel(session.user?.role as string)})
-                    </span>
-                  </div>
-                  {session.user?.role === 'ORGANIZER' && (
-                    <Button variant="outline" asChild>
-                      <a href="/dashboard">Tableau de bord</a>
-                    </Button>
-                  )}
-                  {session.user?.role === 'ADMIN' && (
-                    <Button variant="outline" asChild>
-                      <a href="/admin">Administration</a>
-                    </Button>
-                  )}
-                  <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Déconnexion
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center space-x-2">
-                  <Button variant="ghost" onClick={() => signIn()}>
-                    Connexion
-                  </Button>
-                </div>
-              )}
-            </nav>
-          </div>
-        </div>
-      </header>
+    <div className="flex min-h-screen flex-col bg-white">
+      <SiteHeader>
+        <Link href="/program" className="hidden px-3 py-2 font-medium text-itf-navy hover:underline sm:inline">Programme</Link>
+        {role === 'ORGANIZER' && <Button variant="outline" size="sm" asChild><Link href="/dashboard">Tableau de bord</Link></Button>}
+        {role === 'ADMIN' && <Button variant="outline" size="sm" asChild><Link href="/admin">Administration</Link></Button>}
+        {session ? (
+          <Button variant="ghost" size="sm" onClick={() => signOut({ callbackUrl: '/' })}>
+            <LogOut className="mr-1 h-4 w-4" /> Déconnexion
+          </Button>
+        ) : (
+          <Button variant="ghost" size="sm" onClick={() => signIn()}>Espace équipe</Button>
+        )}
+      </SiteHeader>
 
-      {/* Hero Section */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto text-center">
-          <h2 className="text-4xl md:text-6xl font-bold mb-6">
-            Bienvenue sur <span className="text-primary">PanelEvent</span>
-          </h2>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            La plateforme unifiée pour la gestion d'événements, sessions interactives, 
-            questions en direct, sondages et attestations.
-          </p>
-          <div className="flex justify-center">
-            {session?.user?.role === 'ORGANIZER' && (
-              <Button size="lg" className="text-lg px-8" asChild>
-                <a href="/dashboard">Créer un événement</a>
+      {/* Hero */}
+      <section className="itf-hero-bg relative overflow-hidden">
+        <div className="container mx-auto grid items-center gap-10 px-4 py-14 md:grid-cols-2 md:py-20">
+          <div>
+            <AnsutLogo className="mb-6 h-14 w-auto" />
+            <ItfWordmark />
+            <p className="mt-6 max-w-md text-lg text-itf-navy/80">
+              Bienvenue sur le stand de l’<strong>ANSUT</strong>. {EVENT.tagline}.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Button size="lg" className="bg-itf-navy hover:bg-itf-navy-deep" asChild>
+                <Link href="/register">S’inscrire au stand <ArrowRight className="ml-2 h-4 w-4" /></Link>
               </Button>
-            )}
+              <Button size="lg" variant="outline" className="border-itf-navy text-itf-navy" asChild>
+                <Link href="/program">Voir le programme</Link>
+              </Button>
+            </div>
           </div>
-        </div>
-      </section>
 
-      {/* Features Section */}
-      <section className="py-16 px-4 bg-muted/50">
-        <div className="container mx-auto">
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold mb-4">Fonctionnalités</h3>
-            <p className="text-muted-foreground">
-              Tout ce dont vous avez besoin pour gérer vos événements
+          <div className="rounded-3xl bg-white/80 p-8 shadow-xl ring-1 ring-itf-cyan/20 backdrop-blur">
+            <div className="flex items-center gap-3 text-itf-orange">
+              <CalendarDays className="h-7 w-7" />
+              <span className="text-sm font-semibold uppercase tracking-wider">Dates</span>
+            </div>
+            <p className="mt-2 text-6xl font-extrabold leading-none md:text-7xl">
+              <span className="text-itf-green">11</span>
+              <span className="text-itf-navy"> - </span>
+              <span className="text-itf-cyan">13</span>
+            </p>
+            <p className="mt-1 text-2xl font-bold text-itf-navy">novembre 2026</p>
+            <div className="mt-6 flex items-center gap-2 text-lg font-semibold tracking-wide">
+              <MapPin className="h-6 w-6 text-itf-orange" />
+              <span className="itf-gradient-text">Sofitel Hôtel Ivoire</span>
+            </div>
+            <p className="mt-6 text-sm text-muted-foreground">
+              {STAND_SESSIONS.length} temps forts sur {PROGRAM_DAYS.length} jours : causeries, pitchs, panels, lancement du PASS et networking.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Calendar className="w-6 h-6 text-primary" />
+        </div>
+      </section>
+
+      {/* Temps forts */}
+      <section className="px-4 py-14">
+        <div className="container mx-auto">
+          <h2 className="text-3xl font-bold text-itf-navy">Temps forts du stand</h2>
+          <div className="mt-2 h-1 w-16 rounded bg-itf-orange" />
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            {PROGRAM_DAYS.map((day) => (
+              <div key={day} className="rounded-2xl border bg-itf-sky/40 p-5">
+                <p className="text-sm font-bold uppercase tracking-wider text-itf-cyan">{day}</p>
+                <ul className="mt-3 space-y-3">
+                  {STAND_SESSIONS.filter((s) => s.day === day).map((s) => (
+                    <li key={s.id} className="flex gap-3">
+                      <span className="flex w-24 shrink-0 items-start gap-1 text-xs font-semibold text-itf-navy/70">
+                        <Clock className="mt-0.5 h-3 w-3" /> {s.time}
+                      </span>
+                      <span className="text-sm font-medium text-itf-navy">{s.title}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <h4 className="text-lg font-semibold mb-2">Gestion d'événements</h4>
-              <p className="text-muted-foreground">
-                Créez et gérez facilement vos événements avec un planning en temps réel
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Users className="w-6 h-6 text-primary" />
-              </div>
-              <h4 className="text-lg font-semibold mb-2">Questions en direct</h4>
-              <p className="text-muted-foreground">
-                Interagissez avec votre audience grâce au système de Q&A en temps réel
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Clock className="w-6 h-6 text-primary" />
-              </div>
-              <h4 className="text-lg font-semibold mb-2">Sondages interactifs</h4>
-              <p className="text-muted-foreground">
-                Créez des sondages et visualisez les résultats en direct
-              </p>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t py-8 px-4">
-        <div className="container mx-auto text-center">
-          <p className="text-muted-foreground">
-            © 2024 PanelEvent. Tous droits réservés.
-          </p>
+      {/* Fonctionnalités */}
+      <section className="itf-band px-4 py-14 text-white">
+        <div className="container mx-auto grid gap-8 md:grid-cols-3">
+          {[
+            { icon: MessageSquare, title: 'Questions en direct', text: 'Posez vos questions aux intervenants pendant les causeries et panels.' },
+            { icon: BarChart3, title: 'Sondages interactifs', text: 'Donnez votre avis et suivez les résultats en temps réel.' },
+            { icon: Award, title: 'Attestation de visite', text: 'Recevez votre attestation de participation au stand ANSUT.' },
+          ].map(({ icon: Icon, title, text }) => (
+            <div key={title} className="flex gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/10">
+                <Icon className="h-6 w-6 text-itf-green" />
+              </div>
+              <div>
+                <h3 className="font-semibold">{title}</h3>
+                <p className="mt-1 text-sm text-white/75">{text}</p>
+              </div>
+            </div>
+          ))}
         </div>
-      </footer>
+      </section>
+
+      <div className="flex-1" />
+      <SiteFooter />
     </div>
   )
 }

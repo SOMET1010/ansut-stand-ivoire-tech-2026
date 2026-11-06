@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
 // Simple in-memory rate limiting
-const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000 // 1 hour
-const RATE_LIMIT_MAX = 5
+// Sur un stand, plusieurs visiteurs partagent la même IP (tablette, Wi-Fi) :
+// limite large pour ne pas bloquer les inscriptions.
+const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000 // 10 minutes
+const RATE_LIMIT_MAX = 120
 const rateLimitStore = new Map<string, { count: number; firstRequest: number }>()
 
 function isRateLimited(ip: string) {
@@ -30,7 +32,7 @@ function isRateLimited(ip: string) {
 
 export async function POST(request: NextRequest) {
   try {
-    const ip = request.headers.get('x-forwarded-for') || 'unknown'
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'
 
     if (isRateLimited(ip)) {
       return NextResponse.json(

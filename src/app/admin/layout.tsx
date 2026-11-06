@@ -104,7 +104,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <span className="text-sm font-bold text-primary-foreground">P</span>
                   </div>
                   <div className="leading-tight">
-                    <h1 className="text-lg font-semibold">PanelEvent</h1>
+                    <h1 className="text-lg font-semibold">ANSUT · ITF 2026</h1>
                     <p className="text-xs text-muted-foreground">Admin</p>
                   </div>
                 </div>

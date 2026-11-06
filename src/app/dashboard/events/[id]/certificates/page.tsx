@@ -275,7 +275,7 @@ Délivré le [DATE DE DÉLIVRANCE]
         .replace('[DATE DE DÉBUT]', '15 janvier 2024')
         .replace('[DATE DE FIN]', '15 janvier 2024')
         .replace('[DATE DE DÉLIVRANCE]', format(new Date(), 'dd MMMM yyyy', { locale: fr }))
-        .replace('[ORGANISATEUR]', 'PanelEvent')
+        .replace('[ORGANISATEUR]', 'ANSUT')
     }
 
     return content

@@ -49,3 +49,11 @@ prompt
 
 server.log
 .env
+
+# bases locales
+*.db
+*.db-journal
+*.log
+
+# données internes ANSUT (invitations, partenaires, validations) : jamais versionnées
+/data/private/

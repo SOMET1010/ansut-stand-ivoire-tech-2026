@@ -122,7 +122,7 @@ export default function EventPage() {
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <span className="text-primary-foreground font-bold">P</span>
               </div>
-              <h1 className="text-2xl font-bold">PanelEvent</h1>
+              <h1 className="text-2xl font-bold">ANSUT · ITF 2026</h1>
             </div>
             <Button variant="ghost" size="sm" asChild>
               <Link href="/">

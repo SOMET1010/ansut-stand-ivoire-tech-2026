@@ -70,7 +70,7 @@ export default function SignIn() {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Connexion</CardTitle>
           <CardDescription>
-            Connectez-vous à votre compte PanelEvent
+            Connectez-vous à votre espace équipe ANSUT
           </CardDescription>
         </CardHeader>
         <CardContent>

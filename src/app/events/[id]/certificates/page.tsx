@@ -82,7 +82,7 @@ export default function EventCertificatesPage() {
           qrCodeUrl: '/qrcodes/participation_sample.png',
           eventTitle: 'Conférence Technologique 2024',
           eventDate: '15 janvier 2024',
-          organizerName: 'PanelEvent'
+          organizerName: 'ANSUT'
         },
         {
           id: '2',
@@ -93,7 +93,7 @@ export default function EventCertificatesPage() {
           qrCodeUrl: '/qrcodes/achievement_sample.png',
           eventTitle: 'Conférence Technologique 2024',
           eventDate: '15 janvier 2024',
-          organizerName: 'PanelEvent'
+          organizerName: 'ANSUT'
         }
       ]
 

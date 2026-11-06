@@ -119,7 +119,7 @@ export default function DashboardLayout({
                   <span className="text-primary-foreground font-bold text-sm">P</span>
                 </div>
                 <div>
-                  <h1 className="font-semibold text-lg">PanelEvent</h1>
+                  <h1 className="font-semibold text-lg">ANSUT · ITF 2026</h1>
                   <p className="text-xs text-muted-foreground">Organisateur</p>
                 </div>
               </div>

@@ -1,5 +1,7 @@
 "use client"
 
+import { SiteHeader, SiteFooter } from '@/components/brand/brand'
+import { EVENT } from '@/config/event'
 import { useState } from 'react'
 import {
   Card,
@@ -20,7 +22,7 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import { User, Mail, Phone, Building, Briefcase, Calendar, ArrowLeft } from 'lucide-react'
+import { User, Mail, Phone, Building, Briefcase, Calendar } from 'lucide-react'
 import Link from 'next/link'
 
 export default function RegisterPage() {
@@ -50,7 +52,7 @@ export default function RegisterPage() {
     
     try {
       // ID de l'événement (dans un cas réel, ce serait dynamique)
-      const eventId = 'event-2024'
+      const eventId = EVENT.id
       
       const response = await fetch('/api/events/register', {
         method: 'POST',
@@ -89,7 +91,7 @@ export default function RegisterPage() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center">
+      <div className="min-h-screen itf-hero-bg flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -106,36 +108,20 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted">
-      {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Link href="/" className="flex items-center space-x-2">
-                <ArrowLeft className="w-4 h-4" />
-                <span>Retour</span>
-              </Link>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold">E</span>
-              </div>
-              <h1 className="text-2xl font-bold">Inscription à l'événement</h1>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen itf-hero-bg">
+      <SiteHeader>
+        <Link href="/program" className="px-3 py-2 font-medium text-itf-navy hover:underline">Programme</Link>
+      </SiteHeader>
 
       {/* Form Section */}
       <section className="py-12 px-4">
         <div className="container mx-auto max-w-2xl">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold mb-4">
-              Inscrivez-vous à l'<span className="text-primary">Événement 2024</span>
+              Inscription au <span className="itf-gradient-text">stand ANSUT</span>
             </h2>
             <p className="text-muted-foreground">
-              Remplissez le formulaire ci-dessous pour vous inscrire et accéder au programme complet
+              Ivoire Tech Forum 2026 · 11 – 13 novembre · Sofitel Hôtel Ivoire
             </p>
           </div>
 
@@ -326,14 +312,7 @@ export default function RegisterPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t py-8 px-4">
-        <div className="container mx-auto text-center">
-          <p className="text-muted-foreground">
-            © 2024 Événement. Tous droits réservés.
-          </p>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   )
 }

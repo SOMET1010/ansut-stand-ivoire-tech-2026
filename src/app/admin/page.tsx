@@ -166,7 +166,7 @@ export default function AdminDashboard() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Tableau de bord</h1>
         <p className="text-muted-foreground">
-          Vue d'ensemble de l'activité sur la plateforme PanelEvent
+          Vue d'ensemble de l'activité sur la plateforme du stand ANSUT
         </p>
       </div>
 

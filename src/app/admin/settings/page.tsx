@@ -29,7 +29,7 @@ export default function AdminSettingsPage() {
               <div>
                 <label className="text-sm font-medium mb-2 block">Nom de la plateforme</label>
                 <div className="p-2 border rounded-md bg-muted">
-                  PanelEvent
+                  ANSUT · Ivoire Tech Forum 2026
                 </div>
               </div>
               <div>
