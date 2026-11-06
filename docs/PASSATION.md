@@ -59,7 +59,13 @@ Rôles : **ADMIN** = DG (seul à valider les courriers) · **ORGANIZER** = équi
 | `/ecran/quiz/[id]` | Écran animateur / projection du quiz (code, QR, chrono, réponses, classement) |
 | `/ecran/activite/[id]` | Projection d'une activité (nuage de mots, sondage, note sur 5, mur d'idées) |
 
-Les anciennes fonctions de PanelEvent (événements, Q&A, sondages, certificats, feedbacks, admin) sont toujours là.
+### Les fonctions de l'an dernier sont conservées
+
+Ce repo est une **copie complète de PanelEvent avec tout son historique** : rien n'a été retiré. On peut toujours créer des **événements**, leur ajouter des **panels**, et sur chaque panel des **questions du public** et des **sondages**, puis délivrer **attestations** et recueillir des **feedbacks**. Les 11 séquences du stand sont d'ailleurs elles-mêmes des panels du même modèle.
+
+Vérifié en réel (`e2e/panels.e2e.cjs`, 17 contrôles) : création d'un événement « panel conférence », ajout d'un panel, sondage, question du public, et chargement de toutes les pages organisateur (`/dashboard/events/[id]` : programme, Q&A, sondages, participants, certificats) et publiques (`/e/[slug]`, `/events/[id]/qa`, `/polls`, `/feedback`).
+
+Les **animations en direct** (quiz, nuage de mots, sondage, note, mur) sont **en plus** et ne sont pas encore rattachées à un panel : elles se lancent depuis `/dashboard/stand/animations`. Les rattacher à un panel est une évolution simple (ajouter `panelId` à `Quiz` et `LiveActivity`).
 
 ## 5. Données et confidentialité
 
@@ -123,6 +129,10 @@ ORGANIZER_EMAIL=… ORGANIZER_PASSWORD=… DG_EMAIL=… DG_PASSWORD=… TOP_QUES
 5. **Accès du DG** : à la connexion, un ADMIN est redirigé vers `/admin`, dont le menu n'a pas de lien vers « Stand ANSUT » → ajouter le lien (ou rediriger vers `/dashboard/stand`).
 6. Charger les **contacts e-mail** des partenaires dans la matrice (vides aujourd'hui) pour que « Ouvrir dans ma messagerie » soit utile.
 7. Répétition générale sur le Wi-Fi du stand avec 20–30 téléphones (l'interrogation toutes les secondes est légère mais non testée à cette échelle).
+
+**Sécurité (héritée de PanelEvent, à corriger avant mise en ligne)** :
+- `POST /api/events/[id]/polls` : **aucune vérification de connexion** → n'importe qui peut créer un sondage.
+- `POST /api/organizer/events` : enregistre le corps de la requête tel quel (`...body`) et l'autorise à **tout utilisateur connecté**, même participant → restreindre aux rôles ORGANIZER/ADMIN et lister les champs acceptés.
 
 **Backlog / dette** : données fictives « 2024 » codées en dur dans plusieurs pages `/admin` · mots de passe en dur dans `prisma/seed.ts` et `scripts/create-admin.ts` · rate limit en mémoire (une seule instance) · `server.ts`/Socket.IO inutilisé par les nouvelles fonctions · liens réseaux sociaux ANSUT à confirmer (non affichés) · service d'envoi d'e-mails (Resend/Twilio) si l'envoi automatique est voulu · avertissements ESLint hérités.
 
