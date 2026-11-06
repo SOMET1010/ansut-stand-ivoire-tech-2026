@@ -90,6 +90,8 @@ model Panel {
   event   Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
   questions Question[]
   polls     Poll[]
+  invitations Invitation[]
+  attendances SessionAttendance[]
 
   @@map("panels")
 }
@@ -279,4 +281,72 @@ enum QuestionStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+// ─── Stand ANSUT ITF 2026 ────────────────────────────────────────────
+
+/// Partenaire à inviter à une séquence (matrice « Invitations et présence »).
+model Invitation {
+  id           String   @id @default(cuid())
+  partnerName  String
+  contactRole  String?
+  email        String?
+  /// A_PREPARER | REDIGE | ENVOYE
+  letterStatus String   @default("A_PREPARER")
+  /// A_VALIDER | VALIDE | REFUSE (réservé au rôle ADMIN / DG)
+  dgValidation String   @default("A_VALIDER")
+  letterDraft  String?
+  /// "ia" ou "modele" : origine du brouillon
+  letterSource String?
+  attended     Boolean  @default(false)
+  checkedInAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  panelId String
+  panel   Panel  @relation(fields: [panelId], references: [id], onDelete: Cascade)
+
+  @@map("invitations")
+}
+
+/// Pointage d'un visiteur à une séquence (QR code du stand).
+model SessionAttendance {
+  id             String   @id @default(cuid())
+  name           String
+  organization   String?
+  registrationId String?
+  createdAt      DateTime @default(now())
+
+  panelId String
+  panel   Panel  @relation(fields: [panelId], references: [id], onDelete: Cascade)
+
+  @@unique([panelId, registrationId])
+  @@map("session_attendances")
+}
+
+/// Contact laissé à l'assistant du stand.
+model Lead {
+  id           String   @id @default(cuid())
+  name         String
+  email        String?
+  phone        String?
+  organization String?
+  interest     String
+  source       String   @default("assistant")
+  createdAt    DateTime @default(now())
+
+  @@map("leads")
+}
+
+/// Trace de chaque exécution d'agent (audit, bilan).
+model AgentRun {
+  id        String   @id @default(cuid())
+  /// invitation | assistant | moderation | bilan
+  kind      String
+  usedAI    Boolean
+  input     String?
+  output    String
+  createdAt DateTime @default(now())
+
+  @@map("agent_runs")
 }

@@ -15,6 +15,7 @@ export default function Home() {
     <div className="flex min-h-screen flex-col bg-white">
       <SiteHeader>
         <Link href="/program" className="hidden px-3 py-2 font-medium text-itf-navy hover:underline sm:inline">Programme</Link>
+        <Link href="/assistant" className="hidden px-3 py-2 font-medium text-itf-navy hover:underline sm:inline">Assistant</Link>
         {role === 'ORGANIZER' && <Button variant="outline" size="sm" asChild><Link href="/dashboard">Tableau de bord</Link></Button>}
         {role === 'ADMIN' && <Button variant="outline" size="sm" asChild><Link href="/admin">Administration</Link></Button>}
         {session ? (
@@ -41,6 +42,9 @@ export default function Home() {
               </Button>
               <Button size="lg" variant="outline" className="border-itf-navy text-itf-navy" asChild>
                 <Link href="/program">Voir le programme</Link>
+              </Button>
+              <Button size="lg" variant="ghost" className="text-itf-navy" asChild>
+                <Link href="/assistant">Poser une question</Link>
               </Button>
             </div>
           </div>

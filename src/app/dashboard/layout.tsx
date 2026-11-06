@@ -21,6 +21,11 @@ import {
 
 const organizerNavItems = [
   {
+    title: 'Stand ANSUT',
+    href: '/dashboard/stand',
+    description: 'Invitations, présences, agents IA'
+  },
+  {
     title: 'Tableau de bord',
     href: '/dashboard',
     description: 'Vue d\'ensemble et statistiques'
@@ -116,7 +121,7 @@ export default function DashboardLayout({
             {!isSidebarCollapsed && (
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold text-sm">P</span>
+                  <span className="text-primary-foreground font-bold text-sm">A</span>
                 </div>
                 <div>
                   <h1 className="font-semibold text-lg">ANSUT · ITF 2026</h1>
@@ -145,8 +150,9 @@ export default function DashboardLayout({
               const isActive =
                 pathname === item.href ||
                 pathname === `${item.href}/` ||
-                (pathname.startsWith(`${item.href}/`) &&
-                !pathname.includes('/[id]'));
+                (item.href !== '/dashboard' &&
+                  pathname.startsWith(`${item.href}/`) &&
+                  !pathname.includes('/[id]'));
 
               return (
                 <Link key={item.href} href={item.href}>
