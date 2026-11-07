@@ -7,12 +7,15 @@
     "build": "next build",
     "start": "NODE_ENV=production tsx server.ts 2>&1 | tee server.log",
     "lint": "next lint",
-    "db:push": "prisma db push",
+    "db:push": "prisma migrate dev",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
     "db:seed": "tsx prisma/seed.ts",
-    "db:seed:itf2026": "tsx scripts/seed-itf2026.ts"
+    "db:seed:itf2026": "tsx scripts/seed-itf2026.ts",
+    "postinstall": "prisma generate",
+    "db:deploy": "prisma migrate deploy && tsx scripts/seed-itf2026.ts && tsx scripts/seed-animations-itf2026.ts && tsx scripts/bootstrap-accounts.ts",
+    "vercel-build": "npm run db:deploy && next build"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.6.0",
