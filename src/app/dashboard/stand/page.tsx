@@ -22,7 +22,7 @@ export default function StandDashboardPage() {
       </div>
       {error && <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
       <Tabs defaultValue="invitations">
-        <TabsList className="flex-wrap">
+        <TabsList className="h-auto flex-wrap">
           <TabsTrigger value="invitations">Invitations</TabsTrigger>
           <TabsTrigger value="presences">Présences</TabsTrigger>
           <TabsTrigger value="questions">Questions</TabsTrigger>

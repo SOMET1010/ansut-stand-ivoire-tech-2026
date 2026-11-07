@@ -86,6 +86,15 @@ async function login(b, email, password, base = B, opts = {}) {
   await mob.click('a[href="/dashboard/stand/animations"]'); await mob.waitForURL('**/animations'); await mob.waitForTimeout(400)
   const drawer = await mob.locator('a[href="/dashboard/stand/animations"]').boundingBox()
   ok(drawer && drawer.x + drawer.width <= 0, `6c le tiroir se referme après navigation (x=${Math.round(drawer?.x ?? 0)})`)
+  // Les 5 onglets du stand doivent rester cliquables sur téléphone (barre d'onglets sur 2 lignes)
+  await mob.goto(B + '/dashboard/stand'); await mob.waitForSelector('[role=tablist]')
+  const tabsOk = []
+  for (const t of ['Invitations', 'Présences', 'Questions', 'Contacts', 'Bilan du jour']) {
+    const tab = mob.getByRole('tab', { name: t })
+    const clicked = await tab.click({ timeout: 5000 }).then(() => true, () => false)
+    if (clicked && (await tab.getAttribute('data-state')) === 'active') tabsOk.push(t)
+  }
+  ok(tabsOk.length === 5, `6d les 5 onglets du stand sont cliquables sur mobile (${tabsOk.join(', ')})`)
   await mob.screenshot({ path: (process.argv[2] || '.') + '/mobile-dashboard.png' })
 
   // 8. Questions depuis le programme
