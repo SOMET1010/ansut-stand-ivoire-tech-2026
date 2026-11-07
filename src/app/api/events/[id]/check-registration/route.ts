@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireStaff } from '@/lib/stand'
 import { db } from '@/lib/db'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
   const resolvedParams = await params
   try {
     const { searchParams } = new URL(request.url)

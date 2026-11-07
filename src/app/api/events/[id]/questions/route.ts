@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { clientIp, rateLimited } from '@/lib/stand'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
 // GET /api/events/[id]/questions - Récupérer toutes les questions d'un événement
 export async function GET(
@@ -54,10 +57,14 @@ export async function GET(
     })
 
     // Calculer les votes
-    const questionsWithVotes = questions.map(question => ({
+    // L'e-mail de l'auteur et le détail des votes ne sont visibles que par l'équipe
+    const session = await getServerSession(authOptions)
+    const isStaff = session?.user?.role === 'ADMIN' || session?.user?.role === 'ORGANIZER'
+    const questionsWithVotes = questions.map(({ authorEmail, votes, ...question }) => ({
       ...question,
-      upvotes: question.votes.filter(vote => vote.type === 'UP').length,
-      downvotes: question.votes.filter(vote => vote.type === 'DOWN').length
+      ...(isStaff ? { authorEmail, votes } : {}),
+      upvotes: votes.filter(vote => vote.type === 'UP').length,
+      downvotes: votes.filter(vote => vote.type === 'DOWN').length
     }))
 
     return NextResponse.json(questionsWithVotes)
@@ -76,12 +83,15 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    if (rateLimited(`question:${clientIp(request.headers)}`, 600, 10 * 60 * 1000)) {
+      return NextResponse.json({ error: 'Beaucoup de questions envoyées depuis ce réseau, réessayez dans quelques minutes' }, { status: 429 })
+    }
     const resolvedParams = await params
     const { id } = resolvedParams
     const body = await request.json()
     const { content, panelId, authorName, authorEmail } = body
 
-    if (!content || !panelId || !authorName || !authorEmail) {
+    if (!content || !panelId || !authorName || typeof content !== 'string' || content.length > 500 || String(authorName).length > 80) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -108,7 +118,7 @@ export async function POST(
         content,
         panelId,
         authorName,
-        authorEmail,
+        authorEmail: typeof authorEmail === 'string' ? authorEmail.slice(0, 120) : '',
         status: 'PENDING'
       },
       include: {

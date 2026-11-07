@@ -37,7 +37,6 @@ export async function GET(
         id: registration.id,
         firstName: registration.firstName,
         lastName: registration.lastName,
-        email: registration.email,
         registeredAt: registration.createdAt,
         event: registration.event
       }

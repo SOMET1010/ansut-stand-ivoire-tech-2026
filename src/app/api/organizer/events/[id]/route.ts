@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma'
 import { z } from 'zod'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { protectedEventResponse } from '@/lib/stand'
 
 const eventSchema = z.object({
   title: z.string().min(1),
@@ -143,10 +144,11 @@ export async function PUT(
     
     const event = await prisma.event.update({
       where: { id },
+      // Uniquement les champs validés : jamais le corps brut (relations imbriquées, organizerId…)
       data: {
-        ...body,
-        startDate: new Date(body.startDate),
-        endDate: body.endDate ? new Date(body.endDate) : null,
+        ...parsed.data,
+        startDate: new Date(parsed.data.startDate),
+        endDate: parsed.data.endDate ? new Date(parsed.data.endDate) : null,
       },
     })
     return NextResponse.json(event)
@@ -202,14 +204,12 @@ export async function PATCH(
       )
     }
     
-    const updateData: any = { ...body }
-    
-    // Convertir les dates si elles sont présentes
-    if (body.startDate) {
-      updateData.startDate = new Date(body.startDate)
-    }
-    if (body.endDate) {
-      updateData.endDate = body.endDate ? new Date(body.endDate) : null
+    // Uniquement les champs validés : jamais le corps brut (relations imbriquées, organizerId…)
+    const { startDate, endDate, ...rest } = parsed.data
+    const updateData = {
+      ...rest,
+      ...(startDate ? { startDate: new Date(startDate) } : {}),
+      ...(endDate !== undefined ? { endDate: endDate ? new Date(endDate) : null } : {}),
     }
 
     const event = await prisma.event.update({
@@ -263,6 +263,8 @@ export async function DELETE(
         { status: 401 }
       )
     }
+    const locked = protectedEventResponse(id)
+    if (locked) return locked
 
     // Vérifier que l'événement existe et que l'utilisateur est l'organisateur
     const existingEvent = await prisma.event.findUnique({

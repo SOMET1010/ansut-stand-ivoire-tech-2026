@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Clock, MapPin, Users, Mic, Network, Trophy, Presentation, LogOut } from 'lucide-react'
 import { SiteHeader, SiteFooter } from '@/components/brand/brand'
+import { AskQuestion } from '@/components/stand/ask-question'
 import { EVENT, STAND_SESSIONS, PROGRAM_DAYS, sessionType, type ProgramType } from '@/config/event'
 
 const TYPE_META: Record<ProgramType, { label: string; className: string; icon: React.ElementType }> = {
@@ -92,6 +93,7 @@ export default function ProgramPage() {
                     <span className="flex items-center gap-1"><MapPin className="h-4 w-4" /> {s.location}</span>
                     <span className="flex items-center gap-1"><Users className="h-4 w-4" /> Pilote : {s.pilot}</span>
                   </div>
+                  <AskQuestion sessionId={s.id} />
                 </li>
               )
             })}

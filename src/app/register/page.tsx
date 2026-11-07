@@ -41,6 +41,7 @@ export default function RegisterPage() {
   
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -49,6 +50,7 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
+    setSubmitError(null)
     
     try {
       // ID de l'événement (dans un cas réel, ce serait dynamique)
@@ -85,7 +87,7 @@ export default function RegisterPage() {
     } catch (error) {
       console.error('Erreur:', error)
       setIsSubmitting(false)
-      alert(error instanceof Error ? error.message : 'Une erreur est survenue')
+      setSubmitError(error instanceof Error ? error.message : 'Une erreur est survenue')
     }
   }
 
@@ -281,15 +283,13 @@ export default function RegisterPage() {
                     onCheckedChange={(checked) =>
                       handleInputChange('consent', checked as boolean)
                     }
-                    required
                   />
                   <div className="grid gap-1.5 leading-none">
                     <Label
                       htmlFor="consent"
                       className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                     >
-                      J'accepte de recevoir des communications concernant cet
-                      événement *
+                      J'accepte de recevoir des communications de l'ANSUT (facultatif)
                     </Label>
                     <p className="text-xs text-muted-foreground">
                       Vous pouvez vous désinscrire à tout moment
@@ -297,12 +297,17 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
+                <p className="text-xs text-muted-foreground">
+                  Vos informations servent uniquement à gérer votre visite du stand ANSUT (programme, pointage, attestation).
+                </p>
+                {submitError && <p role="alert" className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{submitError}</p>}
+
                 {/* Submit Button */}
                 <Button
                   type="submit"
                   className="w-full"
                   size="lg"
-                  disabled={isSubmitting || !formData.consent}
+                  disabled={isSubmitting}
                 >
                   {isSubmitting ? 'Inscription en cours...' : "S'inscrire à l'événement"}
                 </Button>

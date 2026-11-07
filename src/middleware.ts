@@ -45,10 +45,9 @@ export async function middleware(request: NextRequest) {
     // Redirection selon le rôle après connexion (uniquement depuis la page de connexion)
     if (pathname === '/auth/signin') {
       logger.info('Redirecting from signin based on role', { userRole })
-      if (userRole === 'ADMIN') {
-        return NextResponse.redirect(new URL('/admin', request.url))
-      } else if (userRole === 'ORGANIZER') {
-        return NextResponse.redirect(new URL('/dashboard', request.url))
+      if (userRole === 'ADMIN' || userRole === 'ORGANIZER') {
+        // DG et équipe arrivent directement sur le pilotage du stand
+        return NextResponse.redirect(new URL('/dashboard/stand', request.url))
       } else {
         return NextResponse.redirect(new URL('/', request.url))
       }

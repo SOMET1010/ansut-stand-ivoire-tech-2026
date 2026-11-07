@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireStaff } from '@/lib/stand'
 import { db } from '@/lib/db'
 
 // PATCH /api/questions/[id] - Mettre à jour une question (statut, réponse)
@@ -6,6 +7,8 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
   try {
     const resolvedParams = await params
     const body = await request.json()
@@ -57,6 +60,8 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
   try {
     const resolvedParams = await params
     await db.question.delete({

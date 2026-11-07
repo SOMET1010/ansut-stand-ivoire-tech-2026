@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
@@ -16,7 +16,8 @@ import {
   Star, 
   Mic, 
   FileText, 
-  LogOut 
+  LogOut,
+  Menu,
 } from 'lucide-react'
 
 const organizerNavItems = [
@@ -74,7 +75,10 @@ export default function DashboardLayout({
 }) {
   const { data: session, status } = useSession()
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [isMobileOpen, setIsMobileOpen] = useState(false)
   const pathname = usePathname()
+  // Sur mobile, le tiroir se referme après chaque navigation
+  useEffect(() => { setIsMobileOpen(false) }, [pathname])
 
   if (status === 'loading') {
     return (
@@ -115,10 +119,16 @@ export default function DashboardLayout({
 
   return (
     <div className="flex h-screen bg-background">
-      {/* Sidebar */}
+      {/* Fond sombre derrière le tiroir mobile */}
+      {isMobileOpen && (
+        <button aria-label="Fermer le menu" onClick={() => setIsMobileOpen(false)} className="fixed inset-0 z-40 bg-black/40 md:hidden" />
+      )}
+      {/* Sidebar : tiroir sur mobile, colonne fixe à partir de md */}
       <div className={cn(
-        "border-r bg-muted/20 transition-[width] duration-300 ease-in-out",
-        isSidebarCollapsed ? "w-[72px]" : "w-64"
+        "fixed inset-y-0 left-0 z-50 w-72 border-r bg-background transition-transform duration-300 ease-in-out",
+        "md:static md:z-auto md:translate-x-0 md:bg-muted/20 md:transition-[width]",
+        isMobileOpen ? "translate-x-0" : "-translate-x-full",
+        isSidebarCollapsed ? "md:w-[72px]" : "md:w-64"
       )}>
         <div className="flex h-full flex-col">
           {/* Header */}
@@ -136,8 +146,9 @@ export default function DashboardLayout({
             )}
             <button
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              aria-label={isSidebarCollapsed ? 'Déplier le menu' : 'Replier le menu'}
               className={cn(
-                "ml-auto p-2 hover:bg-muted rounded-md",
+                "ml-auto hidden rounded-md p-2 hover:bg-muted md:block",
                 isSidebarCollapsed && "mx-auto"
               )}
             >
@@ -173,6 +184,8 @@ export default function DashboardLayout({
                     title={isSidebarCollapsed ? item.title : undefined}
                   >
                     <span className="h-4 w-4">
+                      {item.title === 'Stand ANSUT' && <Star className="h-4 w-4" />}
+                      {item.title === 'Animations' && <Mic className="h-4 w-4" />}
                       {item.title === 'Tableau de bord' && <Home className="h-4 w-4" />}
                       {item.title === 'Créer un événement' && <Calendar className="h-4 w-4" />}
                       {item.title === 'Mes événements' && <Calendar className="h-4 w-4" />}
@@ -214,7 +227,7 @@ export default function DashboardLayout({
                     {session.user?.name || 'Organisateur'}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
-                    {session.user?.email || 'organisateur@example.com'}
+                    {session.user?.email}
                   </p>
                 </div>
               )}
@@ -233,9 +246,16 @@ export default function DashboardLayout({
         </div>
       </div>
       
-      <main className="flex-1 overflow-auto">
-        <div className="mx-auto max-w-[1400px] p-6 md:p-10">
-          <div className="rounded-xl border bg-background p-6 md:p-10 shadow-sm">
+      <main className="min-w-0 flex-1 overflow-auto">
+        {/* Barre mobile : ouvre le tiroir de navigation */}
+        <div className="sticky top-0 z-30 flex items-center gap-3 border-b bg-white/95 px-4 py-3 backdrop-blur md:hidden">
+          <button onClick={() => setIsMobileOpen(true)} aria-label="Ouvrir le menu" aria-expanded={isMobileOpen} className="flex h-11 w-11 items-center justify-center rounded-md border">
+            <Menu className="h-5 w-5" />
+          </button>
+          <span className="font-semibold text-itf-navy">ANSUT · ITF 2026</span>
+        </div>
+        <div className="mx-auto max-w-[1400px] p-3 sm:p-6 md:p-10">
+          <div className="rounded-xl border bg-background p-4 shadow-sm sm:p-6 md:p-10">
             {children}
           </div>
         </div>

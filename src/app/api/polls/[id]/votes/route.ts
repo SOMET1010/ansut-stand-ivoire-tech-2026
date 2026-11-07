@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireUser } from '@/lib/stand'
 import { db } from '@/lib/db'
 
 // POST /api/polls/[pollId]/votes - Ajouter ou modifier un vote
@@ -6,11 +7,15 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const sessionUser = await requireUser()
+  if (sessionUser instanceof NextResponse) return sessionUser
   try {
     const resolvedParams = await params
     const { id: pollId } = resolvedParams
     const body = await request.json()
-    const { userId, optionIds } = body
+    // Identité prise dans la session, jamais dans le corps de la requête
+    const userId = sessionUser.id
+    const { optionIds } = body
 
     if (!userId || !optionIds || !Array.isArray(optionIds) || optionIds.length === 0) {
       return NextResponse.json(
@@ -170,7 +175,6 @@ export async function GET(
           select: {
             id: true,
             name: true,
-            email: true
           }
         } : false,
         option: {

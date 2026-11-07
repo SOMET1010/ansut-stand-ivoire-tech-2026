@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireStaff } from '@/lib/stand'
 import { db } from '@/lib/db'
 
 // GET /api/events/[id]/certificate-templates - Récupérer tous les modèles de certificats d'un événement
@@ -44,6 +45,8 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
   const resolvedParams = await params
   try {
     const body = await request.json()

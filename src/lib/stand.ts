@@ -7,13 +7,29 @@ import { EVENT, STAND_SESSIONS } from '@/config/event'
 
 export type StaffRole = 'ADMIN' | 'ORGANIZER'
 
-/** Retourne le rôle de l'équipe connectée, ou une réponse 401/403. */
-export async function requireStaff(): Promise<{ role: StaffRole; email: string } | NextResponse> {
+export interface SessionUser { id: string; email: string; role: string }
+
+/** Utilisateur connecté (identité prise dans la session, jamais dans la requête), ou une réponse 401. */
+export async function requireUser(): Promise<SessionUser | NextResponse> {
   const session = await getServerSession(authOptions)
-  const role = session?.user?.role
-  if (!session?.user?.email) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
-  if (role !== 'ADMIN' && role !== 'ORGANIZER') return NextResponse.json({ error: 'Accès réservé à l’équipe' }, { status: 403 })
-  return { role, email: session.user.email }
+  const user = session?.user
+  if (!user?.id || !user.email) return NextResponse.json({ error: 'Connexion requise' }, { status: 401 })
+  return { id: user.id, email: user.email, role: user.role ?? 'ATTENDEE' }
+}
+
+/** Membre de l'équipe (ADMIN ou ORGANIZER) connecté, ou une réponse 401/403. */
+export async function requireStaff(): Promise<{ id: string; role: StaffRole; email: string } | NextResponse> {
+  const user = await requireUser()
+  if (user instanceof NextResponse) return user
+  if (user.role !== 'ADMIN' && user.role !== 'ORGANIZER') return NextResponse.json({ error: 'Accès réservé à l’équipe' }, { status: 403 })
+  return { id: user.id, role: user.role, email: user.email }
+}
+
+/** L'événement du stand ne peut pas être supprimé (cascade : séquences, invitations, présences). */
+export function protectedEventResponse(eventId: string): NextResponse | null {
+  return eventId === EVENT.id
+    ? NextResponse.json({ error: 'L’événement du stand ANSUT ne peut pas être supprimé' }, { status: 409 })
+    : null
 }
 
 /** Seul le DG (rôle ADMIN) peut valider ou refuser une invitation. */

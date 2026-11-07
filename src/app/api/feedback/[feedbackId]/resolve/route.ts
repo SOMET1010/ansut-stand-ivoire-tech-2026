@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireStaff } from '@/lib/stand'
 import { db } from '@/lib/db'
 
 // POST /api/feedback/[feedbackId]/resolve - Marquer un feedback comme résolu/non résolu
@@ -6,6 +7,8 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ feedbackId: string }> }
 ) {
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
   try {
     const resolvedParams = await params
     const body = await request.json()
@@ -26,7 +29,6 @@ export async function POST(
           select: {
             id: true,
             name: true,
-            email: true
           }
         },
         helpfulVotes: true

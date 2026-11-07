@@ -5,7 +5,7 @@ import { db } from '@/lib/db'
 // Sur un stand, plusieurs visiteurs partagent la même IP (tablette, Wi-Fi) :
 // limite large pour ne pas bloquer les inscriptions.
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000 // 10 minutes
-const RATE_LIMIT_MAX = 120
+const RATE_LIMIT_MAX = 600
 const rateLimitStore = new Map<string, { count: number; firstRequest: number }>()
 
 function isRateLimited(ip: string) {
@@ -58,11 +58,11 @@ export async function POST(request: NextRequest) {
     } = body
 
     // Validation des champs obligatoires
-    if (!eventId || !email || !firstName || !lastName || consent !== true) {
+    if (!eventId || !email || !firstName || !lastName) {
       return NextResponse.json(
         {
           error:
-            'Les champs email, prénom, nom et consentement sont obligatoires'
+            'Les champs email, prénom et nom sont obligatoires'
         },
         { status: 400 }
       )
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
         expectations,
         dietaryRestrictions,
         isPublic: true,
-        consent
+        consent: consent === true
       }
     })
 

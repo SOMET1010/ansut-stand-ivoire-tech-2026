@@ -43,7 +43,7 @@ export default function AnimationsPage() {
           <div key={q.id} className="flex flex-wrap items-center gap-3 rounded-2xl border bg-white p-3">
             <span className="flex-1 font-semibold">{q.title}</span>
             <Badge variant="outline">{q._count.questions} questions</Badge>
-            <Badge variant="outline">{q._count.players} joueurs</Badge>
+            <Badge variant="outline">{q._count.players} joueur{q._count.players > 1 ? 's' : ''}</Badge>
             <Badge className="border-0 bg-itf-sky text-itf-navy">Code {q.code}</Badge>
             <Button size="sm" onClick={() => screen(`/ecran/quiz/${q.id}`)} className="bg-itf-navy hover:bg-itf-navy-deep"><Monitor className="mr-2 h-4 w-4" /> Écran animateur</Button>
             <Button size="icon" variant="ghost" onClick={() => remove(`/api/live/quizzes/${q.id}`)} aria-label="Supprimer"><Trash2 className="h-4 w-4" /></Button>
@@ -58,7 +58,7 @@ export default function AnimationsPage() {
           <div key={a.id} className="flex flex-wrap items-center gap-3 rounded-2xl border bg-white p-3">
             <Badge className="border-0 bg-itf-orange/15 text-itf-orange">{ACTIVITY_LABELS[a.type]}</Badge>
             <span className="flex-1 font-semibold">{a.prompt}</span>
-            <Badge variant="outline">{a._count.responses} réponses</Badge>
+            <Badge variant="outline">{a._count.responses} réponse{a._count.responses > 1 ? 's' : ''}</Badge>
             <Badge variant="outline">{a.open ? 'Ouvert' : 'Fermé'}</Badge>
             <Badge className="border-0 bg-itf-sky text-itf-navy">Code {a.code}</Badge>
             <Button size="sm" onClick={() => screen(`/ecran/activite/${a.id}`)} className="bg-itf-navy hover:bg-itf-navy-deep"><Monitor className="mr-2 h-4 w-4" /> Projeter</Button>

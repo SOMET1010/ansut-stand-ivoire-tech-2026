@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireStaff } from '@/lib/stand'
 import { db } from '@/lib/db'
 
 // GET /api/events/[id]/polls - Récupérer tous les sondages d'un événement
@@ -76,6 +77,8 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
   try {
     const resolvedParams = await params
     const { id } = resolvedParams
