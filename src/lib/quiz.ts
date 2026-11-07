@@ -112,7 +112,7 @@ const GeneratedQuiz = z.object({
 
 /** Génère des questions à partir d'un thème, en se limitant aux faits fournis quand ils existent. */
 export async function generateQuestions(theme: string, count: number): Promise<QuestionInput[]> {
-  if (!isAIEnabled()) throw new Error('La génération de questions nécessite l’IA (ANTHROPIC_API_KEY).')
+  if (!(await isAIEnabled())) throw new Error('La génération de questions nécessite l’IA (clé à saisir dans Administration › Réglages IA).')
   const result = await generateJSON({
     effort: 'medium',
     schema: GeneratedQuiz,

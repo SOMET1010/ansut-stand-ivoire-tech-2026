@@ -11,23 +11,31 @@ const CheckinSchema = z.object({
   organization: z.string().trim().max(160).optional(),
 })
 
+// Titre public d'une séquence : la page de pointage vérifie le QR code avant d'afficher le formulaire.
+export async function GET(request: NextRequest) {
+  const panelId = request.nextUrl.searchParams.get('panelId') ?? ''
+  const panel = panelId ? await db.panel.findFirst({ where: { id: panelId, eventId: EVENT.id }, select: { title: true } }) : null
+  if (!panel) return NextResponse.json({ error: 'Séquence introuvable', code: 'panel' }, { status: 404 })
+  return NextResponse.json({ panel: panel.title })
+}
+
 // Pointage public d'un visiteur à une séquence (QR code affiché sur le stand).
 export async function POST(request: NextRequest) {
   if (rateLimited(`checkin:${clientIp(request.headers)}`, 2000, 10 * 60 * 1000)) {
     return NextResponse.json({ error: 'Trop de pointages, réessayez dans quelques minutes' }, { status: 429 })
   }
-  const parsed = CheckinSchema.safeParse(await request.json())
+  const parsed = CheckinSchema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: 'Données invalides' }, { status: 400 })
   const { panelId, registrationId, organization } = parsed.data
 
   const panel = await db.panel.findFirst({ where: { id: panelId, eventId: EVENT.id } })
-  if (!panel) return NextResponse.json({ error: 'Séquence introuvable' }, { status: 404 })
+  if (!panel) return NextResponse.json({ error: 'Séquence introuvable', code: 'panel' }, { status: 404 })
 
   let name = parsed.data.name
   let org = organization
   if (registrationId) {
     const reg = await db.eventRegistration.findFirst({ where: { id: registrationId, eventId: EVENT.id } })
-    if (!reg) return NextResponse.json({ error: 'Inscription introuvable' }, { status: 404 })
+    if (!reg) return NextResponse.json({ error: 'Inscription introuvable', code: 'registration' }, { status: 404 })
     name = `${reg.firstName ?? ''} ${reg.lastName ?? ''}`.trim()
     org = reg.company ?? org
     await db.eventRegistration.update({ where: { id: reg.id }, data: { attended: true } })

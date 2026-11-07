@@ -448,3 +448,13 @@ model LiveResponse {
   @@index([activityId])
   @@map("live_responses")
 }
+
+/// Réglages modifiables depuis l'administration (ex. clé d'API IA, chiffrée).
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+
+  @@map("app_settings")
+}

@@ -76,6 +76,35 @@ async function login(b, email, password, base = B, opts = {}) {
   ok((await dg.request.delete(B + `/api/organizer/events/${EV}/delete`)).status() === 409, '7c DELETE /delete → 409')
   ok((await (await dg.request.get(B + '/api/stand/sessions')).json()).panels.length === 11, '7d les 11 séquences sont intactes')
 
+  // 11. Réglages IA : réservés à la DG, clé chiffrée et jamais renvoyée en clair
+  const AI = B + '/api/admin/settings/ai'
+  ok((await anon.request.get(AI)).status() === 403 && (await org.request.get(AI)).status() === 403 && (await org.request.put(AI, { data: { apiKey: 'sk-ant-pirate-0000000000000000' } })).status() === 403, '11a réglages IA : anonyme et équipe → 403')
+  const fakeKey = 'sk-ant-e2e-' + 'x'.repeat(24) + 'Z9k7'
+  const saved = await (await dg.request.put(AI, { data: { apiKey: fakeKey } })).json()
+  ok(saved.source === 'admin' && saved.enabled && saved.maskedKey === 'sk-ant-…Z9k7' && !JSON.stringify(saved).includes(fakeKey), `11b clé enregistrée par la DG, renvoyée masquée (${saved.maskedKey})`)
+  const tested = await (await dg.request.post(AI, { data: {} })).json()
+  ok(tested.ok === false && typeof tested.error === 'string', `11c test d’une clé invalide → refus explicite (${tested.error})`)
+  const cleared = await (await dg.request.put(AI, { data: { clearKey: true } })).json()
+  ok(cleared.source !== 'admin' && (await dg.request.put(AI, { data: { apiKey: 'court' } })).status() === 400, `11d clé retirée (provenance : ${cleared.source}), clé trop courte refusée`)
+  await dg.goto(B + '/admin/settings'); await dg.waitForSelector('h1:has-text("Réglages IA")')
+  const dgLinks = await dg.locator('nav a').evaluateAll((as) => as.map((a) => a.getAttribute('href')))
+  ok(dgLinks.includes('/admin/settings'), '11e page Réglages IA accessible depuis le menu admin')
+  await dg.goto(B + '/dashboard/stand'); await dg.waitForSelector('nav')
+  const dgTeamLinks = await dg.locator('nav a').evaluateAll((as) => as.map((a) => a.getAttribute('href')))
+  ok(dgTeamLinks.includes('/admin/settings'), '11f la DG trouve Réglages IA depuis le pilotage du stand')
+
+  // 12. Recherches (SQLite) : plus d'erreur 500, insensible à la casse
+  const su = await dg.request.get(B + '/api/admin/users?search=AUDIT')
+  ok(su.ok() && (await su.json()).users.length > 0, `12a recherche utilisateurs « AUDIT » → ${su.status()}`)
+  ok((await dg.request.get(B + '/api/admin/events?search=forum')).ok(), '12b recherche événements → 200')
+  ok((await org.request.get(B + `/api/events/${EV}/questions?search=MOBILE`)).ok(), '12c recherche dans les questions → 200')
+
+  // 13. QR code de pointage inconnu : message clair, inscription mémorisée conservée
+  await anon.goto(B + '/register'); await anon.evaluate(() => localStorage.setItem('registrationId', 'garde-moi'))
+  await anon.goto(B + '/checkin/inexistant'); await anon.waitForSelector('text=QR code non reconnu')
+  ok((await anon.evaluate(() => localStorage.getItem('registrationId'))) === 'garde-moi', '13a QR inconnu : message affiché, inscription du téléphone conservée')
+  await anon.evaluate(() => localStorage.removeItem('registrationId'))
+
   // 5e. Menu de l'espace équipe : aucune entrée vers les pages héritées cassées
   await org.goto(B + '/dashboard/stand'); await org.waitForSelector('nav')
   const broken = ['/dashboard/qa', '/dashboard/polls', '/dashboard/certificates', '/dashboard/feedbacks', '/dashboard/recordings']
