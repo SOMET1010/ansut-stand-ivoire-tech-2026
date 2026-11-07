@@ -5,20 +5,20 @@ import { z } from 'zod'
 import { db } from '@/lib/db'
 import { FALLBACK, getClient, logAgentRun, withAI } from '@/lib/ai'
 import { publicKnowledge } from '@/lib/stand'
-import { STAND_SESSIONS } from '@/config/event'
+import { getProgram } from '@/lib/program'
 
 export interface ChatTurn {
   role: 'user' | 'assistant'
   content: string
 }
 
-const SYSTEM = `Tu es l'assistant numérique du stand de l'ANSUT à l'Ivoire Tech Forum 2026.
+const systemPrompt = async () => `Tu es l'assistant numérique du stand de l'ANSUT à l'Ivoire Tech Forum 2026.
 Tu réponds en français, en 2 à 5 phrases, avec chaleur et précision.
 Tu réponds UNIQUEMENT à partir des informations ci-dessous. Si une information n'y figure pas (chiffres, budgets, noms, projets non listés), dis que l'équipe présente sur le stand pourra répondre, sans rien inventer.
 Si le visiteur souhaite être recontacté, recevoir de la documentation ou un partenariat, demande son nom, son organisation et un email ou téléphone, puis appelle l'outil save_contact. N'appelle l'outil qu'avec des informations données par le visiteur.
 
 INFORMATIONS :
-${publicKnowledge()}`
+${await publicKnowledge()}`
 
 const saveContact = betaZodTool({
   name: 'save_contact',
@@ -37,14 +37,16 @@ const saveContact = betaZodTool({
   },
 })
 
+// Mots trop courants pour identifier une séquence
+const STOPWORDS = new Set(['dans', 'pour', 'avec', 'puis', 'tous', 'toute', 'sont', 'quand', 'quel', 'quelle', 'lieu', 'heure', 'officielle', 'officiel', 'ouverture'])
+const keywords = (t: string) => t.toLowerCase().split(/[^\p{L}\d]+/u).filter((w) => w.length >= 4 && !STOPWORDS.has(w))
+
 /** Réponse de secours sans IA : orientation vers le programme. */
-function fallbackAnswer(question: string): string {
-  const q = question.toLowerCase()
-  const match = STAND_SESSIONS.filter((s) =>
-    s.title.toLowerCase().split(/[\s,:+/]+/).some((w) => w.length > 4 && q.includes(w)),
-  )
+async function fallbackAnswer(question: string): Promise<string> {
+  const asked = new Set(keywords(question))
+  const match = (await getProgram()).filter((s) => !s.allDay && keywords(s.title).some((w) => asked.has(w)))
   if (match.length) {
-    return match.map((s) => `« ${s.title} » : ${s.day}, ${s.time}, ${s.location}.`).join(' ') +
+    return match.map((s) => `« ${s.title} » : ${s.day}, ${s.time}${s.location ? `, ${s.location}` : ''}.`).join(' ') +
       ' Pour toute autre question, l’équipe du stand vous accueille.'
   }
   return 'L’assistant intelligent n’est pas activé pour le moment. Consultez le programme (/program) ou adressez-vous à l’équipe présente sur le stand ANSUT.'
@@ -68,7 +70,7 @@ export async function runAssistant(history: ChatTurn[]) {
         max_tokens: 1500,
         ...FALLBACK,
         output_config: { effort: 'low' },
-        system: SYSTEM,
+        system: await systemPrompt(),
         tools: [saveContact],
         max_iterations: 3,
         messages,

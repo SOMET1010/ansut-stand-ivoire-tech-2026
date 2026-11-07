@@ -10,7 +10,7 @@ export async function GET() {
 
   const panels = await db.panel.findMany({
     where: { eventId: EVENT.id },
-    orderBy: { order: 'asc' },
+    orderBy: [{ hidden: 'asc' }, { startTime: 'asc' }, { order: 'asc' }],
     include: {
       invitations: { orderBy: { createdAt: 'asc' } },
       attendances: { orderBy: { createdAt: 'desc' } },

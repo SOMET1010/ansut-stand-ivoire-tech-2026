@@ -1,22 +1,20 @@
 // Paramétrage de la plateforme pour le stand ANSUT – Ivoire Tech Forum 2026.
-// Idempotent : crée/met à jour l'organisateur, l'événement et un panel par séquence
-// de la matrice « Invitations et présence » (data/itf2026-sessions.json).
+// Idempotent : crée/met à jour l'organisateur et l'événement, puis charge le programme de
+// référence (data/programme-itf2026.json) UNE FOIS par version : ensuite, le programme se
+// modifie dans Espace équipe › Programme et un nouveau déploiement ne l'écrase pas.
+// Changement de version : les anciennes séquences liées à des invitations, présences ou
+// questions sont masquées (rien n'est perdu), les autres sont supprimées.
 //
 //   ORGANIZER_EMAIL=... ORGANIZER_PASSWORD=... npx tsx scripts/seed-itf2026.ts
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
-import { EVENT, STAND_SESSIONS, sessionType } from '../src/config/event'
+import { EVENT } from '../src/config/event'
+import reference from '../data/programme-itf2026.json'
+import { ProgramInput, toPanelData } from '../src/lib/program-input'
+
+const VERSION_KEY = 'program.seedVersion'
 
 const prisma = new PrismaClient()
-
-/** "11/11/2026" + "15h00" | "11h00-11h30" | "17h30 proposé" | "À confirmer" -> Date (heure d'Abidjan = UTC). */
-function toDate(date: string, time: string, end = false): Date | null {
-  const [d, m, y] = date.split('/').map(Number)
-  const hours = [...time.matchAll(/(\d{1,2})h(\d{2})?/g)]
-  const h = end ? hours[1] : hours[0]
-  if (!h) return end ? null : new Date(Date.UTC(y, m - 1, d, 9, 0))
-  return new Date(Date.UTC(y, m - 1, d, Number(h[1]), Number(h[2] ?? 0)))
-}
 
 async function main() {
   const email = process.env.ORGANIZER_EMAIL
@@ -29,9 +27,8 @@ async function main() {
     create: { email, name: 'Équipe stand ANSUT', role: 'ORGANIZER', passwordHash: await bcrypt.hash(password, 10) },
   })
 
-  const program = STAND_SESSIONS.map((s) => ({
-    day: s.day, time: s.time, title: s.title, description: '', speaker: s.pilot, location: s.location, type: sessionType(s.title),
-  }))
+  const sessions = reference.sessions.map((s) => ProgramInput.parse(s))
+  const program = sessions.map((s) => ({ date: s.date, start: s.start ?? null, end: s.end ?? null, title: s.title, location: s.location, category: s.category }))
 
   const event = await prisma.event.upsert({
     where: { id: EVENT.id },
@@ -52,22 +49,30 @@ async function main() {
     },
   })
 
-  for (const [order, s] of STAND_SESSIONS.entries()) {
-    const id = `${EVENT.id}-${s.id}`
-    const data = {
-      title: s.title,
-      description: s.time.toLowerCase().includes('confirmer') ? 'Horaire à confirmer' : null,
-      startTime: toDate(s.date, s.time)!,
-      endTime: toDate(s.date, s.time, true),
-      speaker: s.pilot,
-      location: s.location,
-      order,
-      eventId: event.id,
-    }
-    await prisma.panel.upsert({ where: { id }, update: data, create: { id, ...data } })
+  const done = await prisma.appSetting.findUnique({ where: { key: VERSION_KEY } })
+  if (done?.value === reference.version) {
+    console.log(`OK : événement "${event.title}" ; programme ${reference.version} déjà chargé (modifications de l'équipe conservées)`)
+    return
   }
 
-  console.log(`OK : événement "${event.title}" + ${STAND_SESSIONS.length} séquences`)
+  const old = await prisma.panel.findMany({
+    where: { eventId: event.id },
+    include: { _count: { select: { invitations: true, attendances: true, questions: true } } },
+  })
+  let hidden = 0
+  for (const p of old) {
+    const used = p._count.invitations + p._count.attendances + p._count.questions > 0
+    if (used) { await prisma.panel.update({ where: { id: p.id }, data: { hidden: true } }); hidden++ }
+    else await prisma.panel.delete({ where: { id: p.id } })
+  }
+  const tag = reference.version.replace(/[^0-9a-z]/gi, '')
+  for (const [order, s] of sessions.entries()) {
+    const id = `${event.id}-${tag}-${String(order + 1).padStart(2, '0')}`
+    const data = { ...toPanelData(s), order, eventId: event.id }
+    await prisma.panel.upsert({ where: { id }, update: data, create: { id, ...data } })
+  }
+  await prisma.appSetting.upsert({ where: { key: VERSION_KEY }, create: { key: VERSION_KEY, value: reference.version }, update: { value: reference.version } })
+  console.log(`OK : événement "${event.title}" + programme ${reference.version} (${sessions.length} séquences ; ${hidden} anciennes masquées, ${old.length - hidden} supprimées)`)
 }
 
 main()

@@ -8,7 +8,9 @@ import { useStand, dayLabel, timeLabel } from '@/components/stand/use-stand'
 
 // Planche de QR codes à imprimer : un par séquence, vers la page de pointage.
 export default function StandQrPage() {
-  const { panels } = useStand()
+  const { panels: all } = useStand()
+  // Un QR code par séquence publiée (hors masquées et animations de toute la journée)
+  const panels = all.filter((p) => !p.hidden && !p.allDay)
   const [codes, setCodes] = useState<Record<string, string>>({})
 
   useEffect(() => {

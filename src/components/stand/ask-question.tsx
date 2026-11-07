@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { EVENT } from '@/config/event'
 
 // Question du public sur une séquence : enregistrée en base, vue par le modérateur (onglet Questions).
-export function AskQuestion({ sessionId }: { sessionId: string }) {
+export function AskQuestion({ panelId }: { panelId: string }) {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [content, setContent] = useState('')
@@ -21,7 +21,7 @@ export function AskQuestion({ sessionId }: { sessionId: string }) {
     const res = await fetch(`/api/events/${EVENT.id}/questions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ panelId: `${EVENT.id}-${sessionId}`, authorName: name.trim() || 'Anonyme', content: content.trim() }),
+      body: JSON.stringify({ panelId, authorName: name.trim() || 'Anonyme', content: content.trim() }),
     })
     if (res.ok) {
       setState('sent')

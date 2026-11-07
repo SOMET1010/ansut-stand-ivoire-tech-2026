@@ -83,6 +83,12 @@ model Panel {
   location    String?
   order       Int       @default(0)
   isActive    Boolean   @default(false)
+  /// Statut affiché au programme (« Talk ANSUT », « Présence institutionnelle »…)
+  category    String?
+  /// Séquence sur toute la journée (startTime = début de journée)
+  allDay      Boolean   @default(false)
+  /// Masquée du programme public (séquence retirée mais conservant invitations ou présences)
+  hidden      Boolean   @default(false)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 

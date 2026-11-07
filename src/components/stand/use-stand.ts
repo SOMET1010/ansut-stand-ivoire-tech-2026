@@ -19,6 +19,9 @@ export interface PanelRow {
   id: string
   title: string
   startTime: string
+  endTime: string | null
+  allDay: boolean
+  hidden: boolean
   location: string | null
   speaker: string | null
   description: string | null
@@ -58,6 +61,8 @@ export function useStand() {
 export function dayLabel(iso: string) {
   return new Date(iso).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })
 }
-export function timeLabel(p: Pick<PanelRow, 'startTime' | 'description'>) {
-  return p.description === 'Horaire à confirmer' ? 'À confirmer' : new Date(p.startTime).toISOString().slice(11, 16).replace(':', 'h')
+export function timeLabel(p: Pick<PanelRow, 'startTime' | 'endTime' | 'allDay'>) {
+  if (p.allDay) return 'Toute la journée'
+  const hm = (iso: string) => iso.slice(11, 16).replace(':', 'h')
+  return p.endTime ? `${hm(p.startTime)} – ${hm(p.endTime)}` : hm(p.startTime)
 }

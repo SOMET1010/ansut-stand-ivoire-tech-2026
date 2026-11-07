@@ -2,7 +2,8 @@
 import { db } from '@/lib/db'
 import { generateText, logAgentRun, withAI } from '@/lib/ai'
 import { templateLetter } from '@/lib/stand'
-import { EVENT, STAND_SESSIONS } from '@/config/event'
+import { EVENT } from '@/config/event'
+import { toProgramItem } from '@/lib/program'
 
 const SYSTEM = `Tu rédiges des courriers officiels d'invitation pour l'ANSUT (Agence Nationale du Service Universel des Télécommunications-TIC, Côte d'Ivoire), signés par le Directeur Général.
 Style : français administratif ivoirien, sobre, courtois, une page maximum.
@@ -13,13 +14,13 @@ export async function draftInvitation(invitationId: string) {
   const inv = await db.invitation.findUnique({ where: { id: invitationId }, include: { panel: true } })
   if (!inv) throw new Error('Invitation introuvable')
 
-  const session = STAND_SESSIONS.find((s) => inv.panel.id.endsWith(s.id))
+  const session = toProgramItem(inv.panel)
   const facts = {
     partner: inv.partnerName,
     contact: inv.contactRole,
     title: inv.panel.title,
-    day: session?.day ?? inv.panel.startTime.toLocaleDateString('fr-FR'),
-    time: session?.time ?? '',
+    day: session.day,
+    time: session.time,
     location: inv.panel.location ?? 'Stand ANSUT',
     pilot: inv.panel.speaker,
   }

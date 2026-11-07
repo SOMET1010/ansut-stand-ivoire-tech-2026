@@ -18,7 +18,7 @@ export async function collectDailyStats(date: string): Promise<DailyStats> {
     db.lead.count({ where: { createdAt: inDay } }),
     db.panel.findMany({
       where: { eventId: EVENT.id, startTime: inDay },
-      orderBy: { order: 'asc' },
+      orderBy: [{ startTime: 'asc' }, { order: 'asc' }],
       include: {
         attendances: true,
         invitations: true,
@@ -41,7 +41,7 @@ export async function collectDailyStats(date: string): Promise<DailyStats> {
     leads,
     sessions: panels.map((p) => ({
       title: p.title,
-      time: p.description === 'Horaire à confirmer' ? 'à confirmer' : p.startTime.toISOString().slice(11, 16).replace(':', 'h'),
+      time: p.allDay ? 'toute la journée' : p.startTime.toISOString().slice(11, 16).replace(':', 'h'),
       attendances: p.attendances.length,
       invited: p.invitations.length,
       invitedPresent: p.invitations.filter((i) => i.attended).length,

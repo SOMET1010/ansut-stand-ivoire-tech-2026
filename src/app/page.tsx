@@ -1,15 +1,23 @@
 "use client"
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useSession, signIn, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { CalendarDays, MapPin, MessageSquare, BarChart3, Award, LogOut, ArrowRight, Clock } from 'lucide-react'
 import { SiteHeader, SiteFooter, ItfWordmark, AnsutLogo } from '@/components/brand/brand'
-import { EVENT, STAND_SESSIONS, PROGRAM_DAYS } from '@/config/event'
+import { EVENT } from '@/config/event'
+import type { ProgramItem } from '@/lib/program'
 
 export default function Home() {
   const { data: session } = useSession()
   const role = session?.user?.role as string | undefined
+  const [days, setDays] = useState<{ date: string; day: string; items: ProgramItem[] }[]>([])
+  useEffect(() => {
+    fetch('/api/program').then((r) => (r.ok ? r.json() : { days: [] })).then((d) => setDays(d.days ?? [])).catch(() => {})
+  }, [])
+  const highlights = days.map((d) => ({ ...d, items: d.items.filter((s) => !s.allDay) }))
+  const count = highlights.reduce((n, d) => n + d.items.length, 0)
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
@@ -65,9 +73,11 @@ export default function Home() {
               <MapPin className="h-6 w-6 text-itf-orange" />
               <span className="itf-gradient-text">Sofitel Hôtel Ivoire</span>
             </div>
-            <p className="mt-6 text-sm text-muted-foreground">
-              {STAND_SESSIONS.length} temps forts sur {PROGRAM_DAYS.length} jours : causeries, pitchs, panels, lancement du PASS et networking.
-            </p>
+            {count > 0 && (
+              <p className="mt-6 text-sm text-muted-foreground">
+                {count} temps forts sur {days.length} jours, en plus des animations permanentes du stand.
+              </p>
+            )}
           </div>
         </div>
       </section>
@@ -78,11 +88,11 @@ export default function Home() {
           <h2 className="text-3xl font-bold text-itf-navy">Temps forts du stand</h2>
           <div className="mt-2 h-1 w-16 rounded bg-itf-orange" />
           <div className="mt-8 grid gap-4 md:grid-cols-3">
-            {PROGRAM_DAYS.map((day) => (
-              <div key={day} className="rounded-2xl border bg-itf-sky/40 p-5">
-                <p className="text-sm font-bold uppercase tracking-wider text-itf-cyan">{day}</p>
+            {highlights.map((d) => (
+              <div key={d.date} className="rounded-2xl border bg-itf-sky/40 p-5">
+                <p className="text-sm font-bold uppercase tracking-wider text-itf-cyan">{d.day}</p>
                 <ul className="mt-3 space-y-3">
-                  {STAND_SESSIONS.filter((s) => s.day === day).map((s) => (
+                  {d.items.map((s) => (
                     <li key={s.id} className="flex gap-3">
                       <span className="flex w-24 shrink-0 items-start gap-1 text-xs font-semibold text-itf-navy/70">
                         <Clock className="mt-0.5 h-3 w-3" /> {s.time}

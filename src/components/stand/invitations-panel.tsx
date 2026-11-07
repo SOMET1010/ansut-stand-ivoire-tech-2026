@@ -61,7 +61,7 @@ export function InvitationsPanel({ panels, canValidate, reload }: { panels: Pane
         <section key={p.id} className="rounded-2xl border bg-white p-4">
           <header className="flex flex-wrap items-baseline justify-between gap-2">
             <h3 className="font-bold text-itf-navy">{p.title}</h3>
-            <span className="text-xs text-muted-foreground">{dayLabel(p.startTime)} · {timeLabel(p)} · {p.location} · Pilote : {p.speaker}</span>
+            <span className="text-xs text-muted-foreground">{dayLabel(p.startTime)} · {timeLabel(p)}{p.location ? ` · ${p.location}` : ''}{p.speaker ? ` · ${p.speaker}` : ''}{p.hidden ? ' · masquée du programme' : ''}</span>
           </header>
           <ul className="mt-3 divide-y">
             {p.invitations.map((inv) => (

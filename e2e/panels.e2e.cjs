@@ -33,6 +33,6 @@ const ok = (c, m) => { console.log((c ? 'OK  ' : 'FAIL') + ' ' + m); if (!c) pro
   }
   await p.goto(B + `/e/${slug}`); await p.waitForLoadState('networkidle'); await p.screenshot({ path: OUT + '/legacy-public.png' });
   const sp = await (await o.request.get(B + '/api/events/itf-2026-ansut/panels')).json();
-  ok((sp.panels ?? sp).length === 11, 'les 11 séquences du stand sont des panels du même modèle');
+  ok((sp.panels ?? sp).length >= 17, 'les séquences du stand sont des panels du même modèle');
   await b.close();
 })().catch(e => { console.error('FAIL', e.message); process.exit(1) });
