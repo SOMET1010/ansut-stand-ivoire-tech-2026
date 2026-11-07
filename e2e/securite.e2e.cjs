@@ -76,6 +76,12 @@ async function login(b, email, password, base = B, opts = {}) {
   ok((await dg.request.delete(B + `/api/organizer/events/${EV}/delete`)).status() === 409, '7c DELETE /delete → 409')
   ok((await (await dg.request.get(B + '/api/stand/sessions')).json()).panels.length === 11, '7d les 11 séquences sont intactes')
 
+  // 5e. Menu de l'espace équipe : aucune entrée vers les pages héritées cassées
+  await org.goto(B + '/dashboard/stand'); await org.waitForSelector('nav')
+  const broken = ['/dashboard/qa', '/dashboard/polls', '/dashboard/certificates', '/dashboard/feedbacks', '/dashboard/recordings']
+  const teamLinks = await org.locator('nav a').evaluateAll((as) => as.map((a) => a.getAttribute('href')))
+  ok(teamLinks.includes('/dashboard/stand') && !teamLinks.some((h) => broken.includes(h)), `5e menu équipe : pages réelles uniquement (${teamLinks.join(', ')})`)
+
   // 6. Espace équipe utilisable sur mobile
   const mob = await login(b, process.env.ORGANIZER2_EMAIL, process.env.ORGANIZER2_PASSWORD, B, { ...devices['iPhone 13'] })
   await mob.goto(B + '/dashboard/stand'); await mob.waitForSelector('text=Stand ANSUT · ITF 2026')

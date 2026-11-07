@@ -11,12 +11,9 @@ import { AnsutLogo, StaffBrand, StaffSignature } from '@/components/brand/brand'
 import {
   Home, 
   Users, 
-  Calendar, 
-  MessageSquare, 
-  BarChart, 
-  Star, 
-  Mic, 
-  FileText, 
+  Calendar,
+  Star,
+  Mic,
   LogOut,
   Menu,
 } from 'lucide-react'
@@ -47,26 +44,9 @@ const organizerNavItems = [
     href: '/dashboard/participants',
     description: 'Gérer les participants'
   },
-  {
-    title: 'Questions & Réponses',
-    href: '/dashboard/qa',
-    description: 'Modérer les Q&A'
-  },
-  {
-    title: 'Sondages',
-    href: '/dashboard/polls',
-    description: 'Gérer les sondages'
-  },
-  {
-    title: 'Certificats',
-    href: '/dashboard/certificates',
-    description: 'Gérer les certificats'
-  },
-  {
-    title: 'Feedbacks',
-    href: '/dashboard/feedbacks',
-    description: 'Analyser les feedbacks'
-  }
+  // Questions, sondages, certificats et feedbacks hérités de PanelEvent retirés du menu :
+  // leurs pages appellent des routes /api/events/my-events/* qui n'existent pas (audit A2).
+  // Les questions du public se modèrent dans l'onglet « Questions » du stand.
 ]
 
 export default function DashboardLayout({
@@ -178,14 +158,8 @@ export default function DashboardLayout({
                       {item.title === 'Stand ANSUT' && <Star className="h-4 w-4" />}
                       {item.title === 'Animations' && <Mic className="h-4 w-4" />}
                       {item.title === 'Tableau de bord' && <Home className="h-4 w-4" />}
-                      {item.title === 'Créer un événement' && <Calendar className="h-4 w-4" />}
                       {item.title === 'Mes événements' && <Calendar className="h-4 w-4" />}
                       {item.title === 'Participants' && <Users className="h-4 w-4" />}
-                      {item.title === 'Questions & Réponses' && <MessageSquare className="h-4 w-4" />}
-                      {item.title === 'Sondages' && <BarChart className="h-4 w-4" />}
-                      {item.title === 'Certificats' && <Star className="h-4 w-4" />}
-                      {item.title === 'Enregistrements' && <Mic className="h-4 w-4" />}
-                      {item.title === 'Feedbacks' && <FileText className="h-4 w-4" />}
                     </span>
                     {!isSidebarCollapsed && (
                       <div className="flex flex-col items-start">
