@@ -126,15 +126,16 @@ ORGANIZER_EMAIL=… ORGANIZER_PASSWORD=… DG_EMAIL=… DG_PASSWORD=… TOP_QUES
 2. **Base PostgreSQL** (Supabase recommandé) : passer `provider = "postgresql"` dans `schema.prisma`, `DATABASE_URL`, puis `prisma migrate` (aujourd'hui `db push`, pas de migrations versionnées). SQLite ne fonctionne pas sur Vercel.
 3. **Déploiement** Vercel branché sur `main` + variables : `NEXTAUTH_SECRET`, `NEXTAUTH_URL` (URL publique), `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `DATABASE_URL`, `ANTHROPIC_API_KEY`. Lancer les 3 scripts de seed + `create-user.ts` sur la base de production. **Accord du porteur requis.**
 4. **Clé Claude** (dépense à valider) puis tester les 5 usages IA en réel.
-5. **Accès du DG** : à la connexion, un ADMIN est redirigé vers `/admin`, dont le menu n'a pas de lien vers « Stand ANSUT » → ajouter le lien (ou rediriger vers `/dashboard/stand`).
 6. Charger les **contacts e-mail** des partenaires dans la matrice (vides aujourd'hui) pour que « Ouvrir dans ma messagerie » soit utile.
 7. Répétition générale sur le Wi-Fi du stand avec 20–30 téléphones (l'interrogation toutes les secondes est légère mais non testée à cette échelle).
 
-**Sécurité (héritée de PanelEvent, à corriger avant mise en ligne)** :
-- `POST /api/events/[id]/polls` : **aucune vérification de connexion** → n'importe qui peut créer un sondage.
-- `POST /api/organizer/events` : enregistre le corps de la requête tel quel (`...body`) et l'autorise à **tout utilisateur connecté**, même participant → restreindre aux rôles ORGANIZER/ADMIN et lister les champs acceptés.
+**Audit 2026-11 — top 10 corrigé** (branche `fix/audit-top10`, test `e2e/securite.e2e.cjs`, 42 contrôles) :
+escalade organisateur → ADMIN, écritures héritées sans connexion, identité prise dans la session, fuites d'e-mails,
+triche au quiz, accès du DG (`/admin` → `/dashboard/stand`, pages fictives retirées), menu mobile en tiroir,
+événement du stand non supprimable, questions du public depuis `/program`, consentement facultatif,
+limites adaptées au Wi-Fi partagé + plafond par téléphone + budget IA horaire (`AI_MAX_CALLS_PER_HOUR`), repli quand l'API Claude tombe.
 
-**Backlog / dette** : données fictives « 2024 » codées en dur dans plusieurs pages `/admin` · mots de passe en dur dans `prisma/seed.ts` et `scripts/create-admin.ts` · rate limit en mémoire (une seule instance) · `server.ts`/Socket.IO inutilisé par les nouvelles fonctions · liens réseaux sociaux ANSUT à confirmer (non affichés) · service d'envoi d'e-mails (Resend/Twilio) si l'envoi automatique est voulu · avertissements ESLint hérités.
+**Backlog / dette** : mots de passe en dur dans `prisma/seed.ts` et `scripts/create-admin.ts` · rate limit en mémoire (une seule instance) · `server.ts`/Socket.IO inutilisé par les nouvelles fonctions · liens réseaux sociaux ANSUT à confirmer (non affichés) · service d'envoi d'e-mails (Resend/Twilio) si l'envoi automatique est voulu · avertissements ESLint hérités.
 
 ## 9. Décisions prises (et pourquoi)
 

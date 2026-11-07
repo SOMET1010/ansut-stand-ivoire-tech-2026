@@ -20,7 +20,7 @@ Règles : seul le rôle `ADMIN` (DG) valide un courrier ; un courrier ne peut ê
 
 ## Agents IA
 
-Sans `ANTHROPIC_API_KEY`, chaque agent fonctionne en **mode sans IA**, signalé à l'écran (courrier par modèle, tri des questions par votes, bilan limité aux chiffres, assistant qui oriente vers le programme). Les agents n'utilisent que les données de la plateforme ; chaque exécution est tracée dans la table `agent_runs`.
+Sans `ANTHROPIC_API_KEY`, chaque agent fonctionne en **mode sans IA**, signalé à l'écran (courrier par modèle, tri des questions par votes, bilan limité aux chiffres, assistant qui oriente vers le programme). Les agents n'utilisent que les données de la plateforme ; chaque exécution est tracée dans la table `agent_runs`. Le mode sans IA s'active aussi si l'API Claude est en panne ou si le budget horaire `AI_MAX_CALLS_PER_HOUR` (défaut 400) est atteint.
 
 ## Démarrage
 
