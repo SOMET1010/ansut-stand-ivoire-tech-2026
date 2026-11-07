@@ -13,7 +13,7 @@ interface QuizState {
   index: number
   total: number
   question: { id: string; text: string; options: string[]; deadline: number | null; correctIndex: number | null } | null
-  me: { nickname: string; score: number; rank: number; answer: { choice: number; correct: boolean; points: number } | null } | null
+  me: { nickname: string; score: number; rank: number; answer: { choice: number; correct?: boolean; points?: number } | null } | null
   podium: { nickname: string; score: number }[] | null
 }
 

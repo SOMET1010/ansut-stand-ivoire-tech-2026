@@ -18,7 +18,14 @@ export async function GET(request: NextRequest, { params }: Ctx) {
     const q = quiz.questions[quiz.currentIndex]
     const player = playerId ? await db.quizPlayer.findFirst({ where: { id: playerId, quizId: quiz.id } }) : null
     const myAnswer = player && q ? await db.quizAnswer.findUnique({ where: { questionId_playerId: { questionId: q.id, playerId: player.id } } }) : null
-    const board = await leaderboard(quiz.id, 1000)
+    const revealed = quiz.status === 'REVEAL' || quiz.status === 'FINISHED'
+    // Question ouverte : scores et rangs calculés SANS la question en cours, sinon la hausse
+    // du score révélerait la bonne réponse (pseudos jetables → triche).
+    const pending = !revealed && q ? await db.quizAnswer.findMany({ where: { questionId: q.id }, select: { playerId: true, points: true } }) : []
+    const pendingPoints = new Map(pending.map((a) => [a.playerId, a.points]))
+    const board = (await leaderboard(quiz.id, 1000))
+      .map((b) => ({ ...b, score: b.score - (pendingPoints.get(b.id) ?? 0) }))
+      .sort((a, b) => b.score - a.score)
     return NextResponse.json({
       kind: 'quiz',
       title: quiz.title,
@@ -33,7 +40,13 @@ export async function GET(request: NextRequest, { params }: Ctx) {
         deadline: deadlineOf(quiz.questionStartedAt, q.timeLimit),
         correctIndex: quiz.status === 'REVEAL' || quiz.status === 'FINISHED' ? q.correctIndex : null,
       } : null,
-      me: player ? { nickname: player.nickname, score: player.score, rank: board.findIndex((b) => b.id === player.id) + 1, answer: myAnswer ? { choice: myAnswer.choice, correct: myAnswer.correct, points: myAnswer.points } : null } : null,
+      me: player ? {
+        nickname: player.nickname,
+        score: board.find((b) => b.id === player.id)?.score ?? 0,
+        rank: board.findIndex((b) => b.id === player.id) + 1,
+        // Avant la révélation : seulement « a répondu », jamais juste/faux ni les points
+        answer: myAnswer ? (revealed ? { choice: myAnswer.choice, correct: myAnswer.correct, points: myAnswer.points } : { choice: myAnswer.choice }) : null,
+      } : null,
       podium: quiz.status === 'FINISHED' ? board.slice(0, 3).map(({ nickname, score }) => ({ nickname, score })) : null,
       serverNow: Date.now(),
     })
@@ -62,7 +75,7 @@ const Body = z.discriminatedUnion('action', [
 ])
 
 export async function POST(request: NextRequest, { params }: Ctx) {
-  if (rateLimited(`play:${clientIp(request.headers)}`, 600, 10 * 60 * 1000)) {
+  if (rateLimited(`play:${clientIp(request.headers)}`, 10000, 10 * 60 * 1000)) {
     return NextResponse.json({ error: 'Trop de requêtes, patientez un instant' }, { status: 429 })
   }
   const { code } = await params
