@@ -37,6 +37,7 @@ type NavItem = {
 
 const adminNavItems: NavItem[] = [
   { title: "Stand ANSUT", href: "/dashboard/stand", description: "Invitations, présences, bilan", icon: Home },
+  { title: "Programme", href: "/dashboard/stand/programme", description: "Séquences, horaires, lieux", icon: Calendar },
   { title: "Animations", href: "/dashboard/stand/animations", description: "Quiz, nuage de mots, sondages", icon: BarChart },
   { title: "Utilisateurs", href: "/admin/users", description: "Comptes de l'équipe", icon: Users },
   { title: "Événements", href: "/admin/events", description: "Tous les événements et panels", icon: Calendar },

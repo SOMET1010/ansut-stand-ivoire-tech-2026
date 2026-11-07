@@ -21,7 +21,8 @@ async function main() {
   for (const row of rows) {
     const panelId = `${EVENT.id}-${row.id}`
     const panel = await prisma.panel.findUnique({ where: { id: panelId } })
-    if (!panel) throw new Error(`Séquence ${panelId} absente : lancer d'abord scripts/seed-itf2026.ts`)
+    // Matrice de l'ancien programme : les séquences retirées sont ignorées (invitations à saisir dans l'interface)
+    if (!panel) { console.warn(`Séquence ${panelId} absente du programme actuel : ignorée`); continue }
 
     const partners = [...row.partners]
     if (row.otherPartners) partners.push({ name: row.otherPartners, contact: '', email: '' })

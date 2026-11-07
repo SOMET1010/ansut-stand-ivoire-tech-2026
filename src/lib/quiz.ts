@@ -119,7 +119,7 @@ export async function generateQuestions(theme: string, count: number): Promise<Q
     system: `Tu crées des quiz grand public, ludiques et pédagogiques, pour le stand de l'ANSUT à l'Ivoire Tech Forum 2026.
 Questions courtes (moins de 120 caractères), 4 réponses plausibles de moins de 60 caractères, une seule bonne réponse, en français.
 Pour tout ce qui concerne l'ANSUT ou le stand, n'utilise que les informations fournies. Pour un thème général (cybersécurité, numérique, inclusion), utilise uniquement des notions largement établies et non datées ; aucun chiffre ni statistique.`,
-    prompt: `Thème : ${theme}\nNombre de questions : ${count}\n\nInformations sur le stand :\n${publicKnowledge()}`,
+    prompt: `Thème : ${theme}\nNombre de questions : ${count}\n\nInformations sur le stand :\n${await publicKnowledge()}`,
   })
   const questions = result.questions
     .filter((q) => q.options.length >= 2 && q.correctIndex >= 0 && q.correctIndex < q.options.length)

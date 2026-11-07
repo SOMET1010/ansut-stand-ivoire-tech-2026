@@ -69,10 +69,11 @@ Les **animations en direct** (quiz, nuage de mots, sondage, note, mur) sont **en
 
 ## 5. Données et confidentialité
 
-- **Programme public** : `data/itf2026-sessions.json` (versionné) → lu par `src/config/event.ts`.
+- **Programme** : en base (table `panels`), modifiable par l'équipe dans **Espace équipe › Programme** (ajout, modification, masquage ; suppression refusée si la séquence a des invitations, présences ou questions). Le site public (`/api/program`), les QR codes et les agents IA le lisent en direct.
+  - Programme de référence : `data/programme-itf2026.json` (versionné). `seed-itf2026.ts` ne le charge qu'**une fois par `version`** (repère `program.seedVersion` dans `app_settings`) : un redéploiement n'écrase pas les modifications de l'équipe. Pour imposer un nouveau programme de référence, changer `version`.
 - **Matrice complète** (partenaires invités, contacts, statut courrier, validation DG) : `data/private/` — **jamais versionnée** (`.gitignore`), car le repo est public et les invitations ne sont pas encore validées par le DG.
   - Source : fichier Excel/CSV « Matrice_invitations_et_presence_ANSUT_ITF2026_V2.01 » → **à demander au porteur du projet** (non transmis par Git).
-  - Conversion : `python3 scripts/matrice-to-json.py <matrice.csv>` régénère les deux JSON, puis relancer `seed-itf2026.ts` et `import-invitations-itf2026.ts` (idempotents).
+  - La matrice V2.01 correspond à l'**ancien** programme : `import-invitations-itf2026.ts` ignore les séquences qui n'existent plus. Les invitations du nouveau programme se saisissent dans l'onglet Invitations du stand.
 - Les invités ne sont **jamais** affichés côté public ; le programme public ne montre que la direction ANSUT qui pilote chaque séquence.
 
 ## 6. Architecture (où est quoi)
@@ -129,7 +130,7 @@ ORGANIZER_EMAIL=… ORGANIZER_PASSWORD=… DG_EMAIL=… DG_PASSWORD=… TOP_QUES
 6. Charger les **contacts e-mail** des partenaires dans la matrice (vides aujourd'hui) pour que « Ouvrir dans ma messagerie » soit utile.
 7. Répétition générale sur le Wi-Fi du stand avec 20–30 téléphones (l'interrogation toutes les secondes est légère mais non testée à cette échelle).
 
-**Audit 2026-11 — top 10 corrigé** (branche `fix/audit-top10`, test `e2e/securite.e2e.cjs`, 55 contrôles) :
+**Audit 2026-11 — top 10 corrigé** (branche `fix/audit-top10`, test `e2e/securite.e2e.cjs`, 62 contrôles ; `stand.e2e.cjs` 17 ; `panels.e2e.cjs` 17) :
 escalade organisateur → ADMIN, écritures héritées sans connexion, identité prise dans la session, fuites d'e-mails,
 triche au quiz, accès du DG (`/admin` → `/dashboard/stand`, pages fictives retirées), menu mobile en tiroir,
 événement du stand non supprimable, questions du public depuis `/program`, consentement facultatif,

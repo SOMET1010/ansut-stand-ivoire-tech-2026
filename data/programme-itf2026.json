@@ -1,0 +1,23 @@
+{
+  "version": "2026-11-07-v2",
+  "source": "Programme ANSUT : stand, talks et présence institutionnelle (mise à jour du 7 novembre 2026)",
+  "sessions": [
+    { "date": "2026-11-11", "allDay": true, "title": "Animations permanentes : accueil, questions, découverte de l'ANSUT", "location": "Stand", "category": "Animation" },
+    { "date": "2026-11-11", "start": "09:00", "end": "09:30", "title": "Ouverture officielle : mots du Directeur de cabinet, du Ministre MTNIT et du Ministre des Finances, photo de famille", "location": "Plénière", "category": "Présence institutionnelle" },
+    { "date": "2026-11-11", "start": "11:00", "end": "11:30", "title": "Talk CICN", "location": "Stand", "category": "Talk ANSUT" },
+    { "date": "2026-11-11", "start": "16:30", "end": "17:00", "title": "Talk Village connecté", "location": "Stand", "category": "Talk ANSUT" },
+    { "date": "2026-11-12", "allDay": true, "title": "Animations permanentes : accueil, questions, découverte de l'ANSUT", "location": "Stand", "category": "Animation" },
+    { "date": "2026-11-12", "start": "09:00", "end": "09:50", "title": "Mot d'ouverture du Directeur de cabinet, puis keynote Elisabeth Moreno", "location": "Plénière", "category": "Présence institutionnelle" },
+    { "date": "2026-11-12", "start": "10:00", "end": "10:45", "title": "Panel ministériel « Aligner l'action publique pour accélérer l'innovation »", "location": "Plénière", "category": "Présence institutionnelle" },
+    { "date": "2026-11-12", "start": "11:30", "end": "12:30", "title": "Masterclass « Connecter tous les territoires » (ANSUT et GSMA)", "location": "Grand Bassam", "category": "Intervention ANSUT" },
+    { "date": "2026-11-12", "start": "15:00", "end": "15:40", "title": "Cérémonie d'ouverture officielle (Dir. de cabinet, Ministre, Maire, chef traditionnel)", "location": "Plénière", "category": "Présence institutionnelle" },
+    { "date": "2026-11-12", "start": "15:40", "end": "16:10", "title": "Next 15 et Scale-up, puis discours de lancement du Premier ministre", "location": "Plénière", "category": "Délégation officielle" },
+    { "date": "2026-11-12", "start": "16:10", "end": "16:25", "title": "Visite officielle du Village", "location": "Stand", "category": "Équipe en place dès 16h00" },
+    { "date": "2026-11-12", "start": "16:30", "end": "17:00", "title": "Talk PASS", "location": "Stand", "category": "Talk ANSUT" },
+    { "date": "2026-11-12", "start": "17:00", "title": "Afterwork", "location": "Stand", "category": "Événement ANSUT" },
+    { "date": "2026-11-13", "allDay": true, "title": "Animations permanentes : accueil, questions, découverte de l'ANSUT", "location": "Stand", "category": "Animation" },
+    { "date": "2026-11-13", "start": "11:30", "end": "12:00", "title": "Talk Julaba", "location": "Stand", "category": "Talk ANSUT" },
+    { "date": "2026-11-13", "start": "15:00", "end": "16:00", "title": "Finale de la Pitch Competition", "location": "Plénière", "category": "Présence recommandée" },
+    { "date": "2026-11-13", "start": "16:00", "end": "16:30", "title": "Clôture, recommandations et remise des prix (ANSUT)", "location": "Plénière", "category": "Présence indispensable" }
+  ]
+}

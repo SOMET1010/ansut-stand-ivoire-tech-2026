@@ -18,7 +18,9 @@ interface Result {
 
 // Agent (d) : regroupement et priorisation des questions du public.
 export function ModerationPanel({ panels }: { panels: PanelRow[] }) {
-  const [panelId, setPanelId] = useState(panels[0]?.id ?? '')
+  // Par défaut : la séquence qui a reçu le plus de questions
+  const busiest = [...panels].sort((a, b) => b._count.questions - a._count.questions)[0]
+  const [panelId, setPanelId] = useState(busiest?.id ?? '')
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState<Result | null>(null)
 

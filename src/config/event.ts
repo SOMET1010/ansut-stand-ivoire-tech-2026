@@ -1,5 +1,3 @@
-import sessions from '../../data/itf2026-sessions.json'
-
 // Configuration centrale de l'événement affiché sur la plateforme.
 // Stand ANSUT – Ivoire Tech Forum 2026.
 
@@ -19,29 +17,4 @@ export const EVENT = {
   // Liens réseaux sociaux : À DÉFINIR (comptes officiels à confirmer par l'ANSUT)
 } as const
 
-export type ProgramType = 'ceremony' | 'conference' | 'workshop' | 'networking' | 'break'
-
-// Séquence issue de la matrice « Invitations et présence ANSUT ITF 2026 » (data/).
-export interface StandSession {
-  id: string
-  date: string // JJ/MM/AAAA
-  day: string
-  time: string
-  location: string
-  title: string
-  pilot: string
-}
-// Les partenaires invités, statuts courrier et validations DG restent dans
-// data/private/ (non versionné, repo public).
-
-export const STAND_SESSIONS: StandSession[] = sessions as StandSession[]
-
-export function sessionType(title: string): ProgramType {
-  const t = title.toLowerCase()
-  if (t.startsWith('keynote') || t.startsWith('lancement')) return 'ceremony'
-  if (t.startsWith('pitch') || t.startsWith('plateau')) return 'workshop'
-  if (t.includes('networking') || t.startsWith('afterwork')) return 'networking'
-  return 'conference'
-}
-
-export const PROGRAM_DAYS = Array.from(new Set(STAND_SESSIONS.map((s) => s.day)))
+// Le programme du stand est en base (table panels), modifiable dans Espace équipe › Programme.

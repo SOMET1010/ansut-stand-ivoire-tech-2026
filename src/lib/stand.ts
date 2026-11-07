@@ -2,7 +2,8 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { EVENT, STAND_SESSIONS } from '@/config/event'
+import { EVENT } from '@/config/event'
+import { programAsText } from '@/lib/program'
 
 
 export type StaffRole = 'ADMIN' | 'ORGANIZER'
@@ -55,8 +56,8 @@ export function clientIp(headers: Headers): string {
 }
 
 /** Seules informations que l'assistant public a le droit d'utiliser. */
-export function publicKnowledge(): string {
-  const program = STAND_SESSIONS.map((s) => `- ${s.day} · ${s.time} · ${s.location} : ${s.title} (pilote : ${s.pilot})`).join('\n')
+export async function publicKnowledge(): Promise<string> {
+  const program = await programAsText()
   return [
     `Événement : ${EVENT.shortTitle}, ${EVENT.dates}, ${EVENT.location}.`,
     `Organisateur du stand : ${EVENT.organizer} (${EVENT.organizerLong}). Site : ${EVENT.website}.`,

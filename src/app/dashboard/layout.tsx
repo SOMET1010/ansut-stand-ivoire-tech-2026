@@ -26,6 +26,11 @@ const organizerNavItems = [
     description: 'Invitations, présences, agents IA'
   },
   {
+    title: 'Programme',
+    href: '/dashboard/stand/programme',
+    description: 'Séquences, horaires, lieux'
+  },
+  {
     title: 'Animations',
     href: '/dashboard/stand/animations',
     description: 'Quiz, nuage de mots, sondages'
@@ -165,6 +170,7 @@ export default function DashboardLayout({
                   >
                     <span className="h-4 w-4">
                       {item.title === 'Stand ANSUT' && <Star className="h-4 w-4" />}
+                      {item.title === 'Programme' && <Calendar className="h-4 w-4" />}
                       {item.title === 'Animations' && <Mic className="h-4 w-4" />}
                       {item.title === 'Tableau de bord' && <Home className="h-4 w-4" />}
                       {item.title === 'Mes événements' && <Calendar className="h-4 w-4" />}

@@ -5,7 +5,7 @@
 const { chromium, devices } = require('playwright')
 const B = process.env.BASE_URL || 'http://localhost:3000'
 const AI_DOWN = process.env.AI_DOWN_URL || 'http://localhost:3001'
-const EV = 'itf-2026-ansut', P1 = `${EV}-itf26-01`
+const EV = 'itf-2026-ansut', P1 = `${EV}-20261107v2-03` // « Talk CICN » du programme de référence
 const ok = (c, m) => { console.log((c ? 'OK  ' : 'FAIL') + ' ' + m); if (!c) process.exitCode = 1 }
 
 async function login(b, email, password, base = B, opts = {}) {
@@ -74,7 +74,26 @@ async function login(b, email, password, base = B, opts = {}) {
   ok((await dg.request.delete(B + `/api/admin/events/${EV}`)).status() === 409, '7a DELETE admin → 409')
   ok((await dg.request.delete(B + `/api/organizer/events/${EV}`)).status() === 409, '7b DELETE organisateur → 409')
   ok((await dg.request.delete(B + `/api/organizer/events/${EV}/delete`)).status() === 409, '7c DELETE /delete → 409')
-  ok((await (await dg.request.get(B + '/api/stand/sessions')).json()).panels.length === 11, '7d les 11 séquences sont intactes')
+  const pubCount = (await (await anon.request.get(B + '/api/program')).json()).count
+  const staffPanels = (await (await dg.request.get(B + '/api/stand/sessions')).json()).panels
+  ok(pubCount >= 17 && staffPanels.filter((p) => !p.hidden).length === pubCount, `7d séquences intactes (${pubCount} au programme public)`)
+
+  // 14. Programme modifiable par l'équipe, sans code
+  const PR = B + '/api/stand/program'
+  const seq = { title: 'Séquence e2e', date: '2026-11-13', start: '17:00', end: '17:30', location: 'Stand', category: 'Talk ANSUT' }
+  ok((await anon.request.post(PR, { data: seq })).status() === 401, '14a programme : écriture anonyme → 401')
+  ok((await org.request.post(PR, { data: { ...seq, end: '16:00' } })).status() === 400, '14b fin avant début → 400')
+  const created = await org.request.post(PR, { data: seq }); const seqId = (await created.json()).id
+  const pubHas = async (t) => JSON.stringify((await (await anon.request.get(B + '/api/program')).json()).days).includes(t)
+  ok(created.status() === 201 && (await pubHas('Séquence e2e')), '14c séquence ajoutée → visible au programme public')
+  await org.request.patch(PR + '/' + seqId, { data: { ...seq, title: 'Séquence e2e modifiée', hidden: true } })
+  ok(!(await pubHas('Séquence e2e modifiée')) && (await (await org.request.get(PR)).json()).items.some((i) => i.title === 'Séquence e2e modifiée' && i.hidden), '14d séquence modifiée et masquée → absente du public, visible par l’équipe')
+  ok((await org.request.delete(PR + '/' + seqId)).ok() && !(await (await org.request.get(PR)).json()).items.some((i) => i.id === seqId), '14e séquence sans données supprimée')
+  ok((await org.request.delete(PR + '/' + P1)).status() === 409, '14f séquence avec questions : suppression refusée (409)')
+  await anon.goto(B + '/program'); await anon.waitForSelector('text=Talk CICN')
+  ok(await anon.locator('text=Animations permanentes').first().isVisible(), '14g programme public : nouveau programme affiché')
+  await org.goto(B + '/dashboard/stand/programme'); await org.waitForSelector('h1:has-text("Programme")')
+  ok((await org.locator('nav a').evaluateAll((as) => as.map((a) => a.getAttribute('href')))).includes('/dashboard/stand/programme'), '14h éditeur de programme accessible depuis le menu équipe')
 
   // 11. Réglages IA : réservés à la DG, clé chiffrée et jamais renvoyée en clair
   const AI = B + '/api/admin/settings/ai'
@@ -134,7 +153,7 @@ async function login(b, email, password, base = B, opts = {}) {
 
   // 8. Questions depuis le programme
   const vis = await (await b.newContext({ ...devices['iPhone 13'] })).newPage()
-  await vis.goto(B + '/program'); await vis.click('text=Poser une question >> nth=0')
+  await vis.goto(B + '/program'); await vis.locator('li', { hasText: 'Talk CICN' }).getByText('Poser une question').click()
   await vis.fill('textarea[aria-label="Votre question"]', 'Comment sécuriser le mobile money de ma maman ?'); await vis.click('button:has-text("Envoyer")')
   await vis.waitForSelector('text=Question envoyée au modérateur'); ok(true, '8b question posée depuis le programme')
   const mod = await (await org.request.post(B + '/api/agents/moderation', { data: { panelId: P1 } })).json()
