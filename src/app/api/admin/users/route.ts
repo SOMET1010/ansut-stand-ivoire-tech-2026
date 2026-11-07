@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { db } from '@/lib/db'
+import { containsText, db } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
@@ -24,8 +24,8 @@ export async function GET(request: NextRequest) {
     
     if (search) {
       where.OR = [
-        { email: { contains: search, mode: 'insensitive' } },
-        { name: { contains: search, mode: 'insensitive' } }
+        { email: containsText(search) },
+        { name: containsText(search) }
       ]
     }
 

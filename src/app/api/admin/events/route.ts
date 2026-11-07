@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { db } from '@/lib/db'
+import { containsText, db } from '@/lib/db'
 import QRCode from 'qrcode'
 
 interface WhereClause {
   OR?: Array<{
-    title?: { contains: string; mode: 'insensitive' }
-    description?: { contains: string; mode: 'insensitive' }
-    location?: { contains: string; mode: 'insensitive' }
+    title?: { contains: string; mode?: 'insensitive' }
+    description?: { contains: string; mode?: 'insensitive' }
+    location?: { contains: string; mode?: 'insensitive' }
   }>
   isActive?: boolean
   isPublic?: boolean
@@ -35,9 +35,9 @@ export async function GET(request: NextRequest) {
     
     if (search) {
       where.OR = [
-        { title: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-        { location: { contains: search, mode: 'insensitive' } }
+        { title: containsText(search) },
+        { description: containsText(search) },
+        { location: containsText(search) }
       ]
     }
 

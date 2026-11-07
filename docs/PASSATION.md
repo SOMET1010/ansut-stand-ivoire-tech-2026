@@ -24,7 +24,7 @@ Le temps réel des animations se fait par **interrogation régulière** (1 à 4 
 
 ```bash
 npm ci
-cp .env.example .env    # renseigner NEXTAUTH_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD ; ANTHROPIC_API_KEY facultatif
+cp .env.example .env    # renseigner NEXTAUTH_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD ; ANTHROPIC_API_KEY facultatif (la clé peut aussi se saisir dans Administration › Réglages IA)
 npx prisma db push
 ORGANIZER_EMAIL=stand@ansut.local ORGANIZER_PASSWORD='<10+ caractères>' npm run db:seed:itf2026   # événement + 11 séquences
 npx tsx scripts/import-invitations-itf2026.ts       # partenaires : nécessite data/private/ (voir §5)
@@ -99,7 +99,7 @@ prisma/schema.prisma         + Invitation, SessionAttendance, Lead, AgentRun, Qu
 - L'envoi se fait depuis la messagerie de l'agent (lien `mailto:`), puis « Marquer envoyé » : **aucun service d'e-mail n'est branché**.
 - Quiz : pseudo unique, une réponse par question, réponse refusée après le temps imparti, bonne réponse jamais envoyée aux téléphones avant la révélation.
 - Activités : nuage 3 mots par téléphone, sondage et note 1 vote, mur 2 idées ; fermeture possible ; identifiant anonyme du téléphone en `localStorage`.
-- Sans `ANTHROPIC_API_KEY`, chaque agent le dit à l'écran et bascule sur un repli déterministe (jamais de faux texte IA). Chaque exécution d'agent est tracée dans `agent_runs`.
+- La clé IA se saisit dans **Administration › Réglages IA** (DG uniquement) : chiffrée en base (AES-256-GCM, clé dérivée de `NEXTAUTH_SECRET`), testée avant enregistrement, prioritaire sur `ANTHROPIC_API_KEY`. Changer `NEXTAUTH_SECRET` oblige à la ressaisir. Sans clé, chaque agent le dit à l'écran et bascule sur un repli déterministe (jamais de faux texte IA). Chaque exécution d'agent est tracée dans `agent_runs`.
 
 ## 7. Ce qui a été vérifié — et ce qui ne l'a pas été
 
@@ -124,12 +124,12 @@ ORGANIZER_EMAIL=… ORGANIZER_PASSWORD=… DG_EMAIL=… DG_PASSWORD=… TOP_QUES
 
 1. **Fusionner `fix/ci-build-env`** (CI verte sur `main`) — prêt, en attente du GO.
 2. **Base PostgreSQL** (Supabase recommandé) : passer `provider = "postgresql"` dans `schema.prisma`, `DATABASE_URL`, puis `prisma migrate` (aujourd'hui `db push`, pas de migrations versionnées). SQLite ne fonctionne pas sur Vercel.
-3. **Déploiement** Vercel branché sur `main` + variables : `NEXTAUTH_SECRET`, `NEXTAUTH_URL` (URL publique), `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `DATABASE_URL`, `ANTHROPIC_API_KEY`. Lancer les 3 scripts de seed + `create-user.ts` sur la base de production. **Accord du porteur requis.**
+3. **Déploiement** Vercel branché sur `main` + variables : `NEXTAUTH_SECRET`, `NEXTAUTH_URL` (URL publique), `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `DATABASE_URL`, `ANTHROPIC_API_KEY` (facultatif si la clé est saisie dans Réglages IA). Lancer les 3 scripts de seed + `create-user.ts` sur la base de production. **Accord du porteur requis.**
 4. **Clé Claude** (dépense à valider) puis tester les 5 usages IA en réel.
 6. Charger les **contacts e-mail** des partenaires dans la matrice (vides aujourd'hui) pour que « Ouvrir dans ma messagerie » soit utile.
 7. Répétition générale sur le Wi-Fi du stand avec 20–30 téléphones (l'interrogation toutes les secondes est légère mais non testée à cette échelle).
 
-**Audit 2026-11 — top 10 corrigé** (branche `fix/audit-top10`, test `e2e/securite.e2e.cjs`, 44 contrôles) :
+**Audit 2026-11 — top 10 corrigé** (branche `fix/audit-top10`, test `e2e/securite.e2e.cjs`, 55 contrôles) :
 escalade organisateur → ADMIN, écritures héritées sans connexion, identité prise dans la session, fuites d'e-mails,
 triche au quiz, accès du DG (`/admin` → `/dashboard/stand`, pages fictives retirées), menu mobile en tiroir,
 événement du stand non supprimable, questions du public depuis `/program`, consentement facultatif,

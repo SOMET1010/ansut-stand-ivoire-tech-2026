@@ -3,7 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { betaZodTool } from '@anthropic-ai/sdk/helpers/beta/zod'
 import { z } from 'zod'
 import { db } from '@/lib/db'
-import { AI_MODEL, FALLBACK, getClient, logAgentRun, withAI } from '@/lib/ai'
+import { FALLBACK, getClient, logAgentRun, withAI } from '@/lib/ai'
 import { publicKnowledge } from '@/lib/stand'
 import { STAND_SESSIONS } from '@/config/event'
 
@@ -62,8 +62,9 @@ export async function runAssistant(history: ChatTurn[]) {
 
   const { value, usedAI, aiError } = await withAI(
     async () => {
-      const final = await getClient().beta.messages.toolRunner({
-        model: AI_MODEL,
+      const { client, model } = await getClient()
+      const final = await client.beta.messages.toolRunner({
+        model,
         max_tokens: 1500,
         ...FALLBACK,
         output_config: { effort: 'low' },

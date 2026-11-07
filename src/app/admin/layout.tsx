@@ -40,6 +40,7 @@ const adminNavItems: NavItem[] = [
   { title: "Animations", href: "/dashboard/stand/animations", description: "Quiz, nuage de mots, sondages", icon: BarChart },
   { title: "Utilisateurs", href: "/admin/users", description: "Comptes de l'équipe", icon: Users },
   { title: "Événements", href: "/admin/events", description: "Tous les événements et panels", icon: Calendar },
+  { title: "Réglages IA", href: "/admin/settings", description: "Clé d'API des agents IA", icon: Settings },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

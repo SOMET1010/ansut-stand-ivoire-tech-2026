@@ -14,6 +14,7 @@ import {
   Calendar,
   Star,
   Mic,
+  Settings,
   LogOut,
   Menu,
 } from 'lucide-react'
@@ -47,6 +48,12 @@ const organizerNavItems = [
   // Questions, sondages, certificats et feedbacks hérités de PanelEvent retirés du menu :
   // leurs pages appellent des routes /api/events/my-events/* qui n'existent pas (audit A2).
   // Les questions du public se modèrent dans l'onglet « Questions » du stand.
+]
+
+// Entrées réservées à la Direction générale
+const adminExtraNavItems = [
+  { title: 'Utilisateurs', href: '/admin/users', description: 'Comptes de l\'équipe' },
+  { title: 'Réglages IA', href: '/admin/settings', description: 'Clé d\'API des agents IA' },
 ]
 
 export default function DashboardLayout({
@@ -84,6 +91,8 @@ export default function DashboardLayout({
     }
     return null
   }
+
+  const navItems = session.user?.role === 'ADMIN' ? [...organizerNavItems, ...adminExtraNavItems] : organizerNavItems
 
   const handleSignOut = async () => {
     try {
@@ -133,7 +142,7 @@ export default function DashboardLayout({
 
           {/* Navigation */}
           <nav className="grid gap-1 p-3">
-            {organizerNavItems.map((item) => {
+            {navItems.map((item) => {
               const isActive =
                 pathname === item.href ||
                 pathname === `${item.href}/` ||
@@ -141,7 +150,7 @@ export default function DashboardLayout({
                   pathname.startsWith(`${item.href}/`) &&
                   !pathname.includes('/[id]') &&
                   // un lien plus précis (ex. /dashboard/stand/animations) l'emporte
-                  !organizerNavItems.some((o) => o.href.length > item.href.length && pathname.startsWith(o.href)));
+                  !navItems.some((o) => o.href.length > item.href.length && pathname.startsWith(o.href)));
 
               return (
                 <Link key={item.href} href={item.href}>
@@ -160,6 +169,8 @@ export default function DashboardLayout({
                       {item.title === 'Tableau de bord' && <Home className="h-4 w-4" />}
                       {item.title === 'Mes événements' && <Calendar className="h-4 w-4" />}
                       {item.title === 'Participants' && <Users className="h-4 w-4" />}
+                      {item.title === 'Utilisateurs' && <Users className="h-4 w-4" />}
+                      {item.title === 'Réglages IA' && <Settings className="h-4 w-4" />}
                     </span>
                     {!isSidebarCollapsed && (
                       <div className="flex flex-col items-start">

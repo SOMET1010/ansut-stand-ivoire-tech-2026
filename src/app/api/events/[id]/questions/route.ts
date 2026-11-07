@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { containsText, db } from '@/lib/db'
 import { clientIp, rateLimited } from '@/lib/stand'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -33,8 +33,8 @@ export async function GET(
 
     if (search) {
       whereClause.OR = [
-        { content: { contains: search, mode: 'insensitive' } },
-        { authorName: { contains: search, mode: 'insensitive' } }
+        { content: containsText(search) },
+        { authorName: containsText(search) }
       ]
     }
 

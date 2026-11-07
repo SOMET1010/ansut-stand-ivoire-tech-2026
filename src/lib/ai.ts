@@ -1,12 +1,14 @@
 // Couche IA commune aux agents du stand (SDK officiel Anthropic).
-// Sans ANTHROPIC_API_KEY, chaque agent bascule sur un modèle de texte
+// La clé et le modèle se règlent dans l'administration (Réglages IA) ; à défaut, ANTHROPIC_API_KEY
+// et ANTHROPIC_MODEL de l'environnement. Sans clé, chaque agent bascule sur un modèle de texte
 // déterministe et l'indique explicitement (usedAI = false) : jamais de faux succès.
 import Anthropic from '@anthropic-ai/sdk'
 import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod'
 import type { z } from 'zod'
 import { db } from '@/lib/db'
+import { SETTING_KEYS, decryptSecret, getSetting } from '@/lib/settings'
 
-export const AI_MODEL = process.env.ANTHROPIC_MODEL || 'claude-opus-5-5'
+export const DEFAULT_AI_MODEL = 'claude-opus-5-5'
 
 // Bascule automatique vers un autre modèle si une requête est déclinée par les garde-fous.
 export const FALLBACK = {
@@ -14,10 +16,39 @@ export const FALLBACK = {
   fallbacks: 'default' as const,
 }
 
-let client: Anthropic | null = null
+export type AIConfig = { apiKey: string | null; model: string; source: 'admin' | 'env' | 'none' }
 
-export function isAIEnabled(): boolean {
-  return Boolean(process.env.ANTHROPIC_API_KEY)
+// Les réglages sont relus au plus toutes les 30 s (plusieurs instances possibles en production).
+let cached: { at: number; config: AIConfig } | null = null
+let client: { apiKey: string; instance: Anthropic } | null = null
+
+export function invalidateAIConfig() {
+  cached = null
+}
+
+export async function getAIConfig(): Promise<AIConfig> {
+  if (cached && Date.now() - cached.at < 30_000) return cached.config
+  let adminKey: string | null = null
+  let adminModel: string | null = null
+  try {
+    const stored = await getSetting(SETTING_KEYS.anthropicApiKey)
+    adminKey = stored ? decryptSecret(stored) : null
+    adminModel = await getSetting(SETTING_KEYS.anthropicModel)
+  } catch (error) {
+    console.error('Lecture des réglages IA impossible, repli sur l’environnement :', error instanceof Error ? error.message : error)
+  }
+  const envKey = process.env.ANTHROPIC_API_KEY || null
+  const config: AIConfig = {
+    apiKey: adminKey || envKey,
+    model: adminModel || process.env.ANTHROPIC_MODEL || DEFAULT_AI_MODEL,
+    source: adminKey ? 'admin' : envKey ? 'env' : 'none',
+  }
+  cached = { at: Date.now(), config }
+  return config
+}
+
+export async function isAIEnabled(): Promise<boolean> {
+  return Boolean((await getAIConfig()).apiKey)
 }
 
 // Budget d'appels IA par heure (toutes routes confondues) : protège la facture si le stand
@@ -38,7 +69,7 @@ export type AIOutcome<T> = { value: T; usedAI: boolean; aiError?: 'disabled' | '
  * ou API indisponible / en erreur → fallback(), signalé par usedAI = false.
  */
 export async function withAI<T>(ai: () => Promise<T>, fallback: () => T | Promise<T>): Promise<AIOutcome<T>> {
-  if (!isAIEnabled()) return { value: await fallback(), usedAI: false, aiError: 'disabled' }
+  if (!(await isAIEnabled())) return { value: await fallback(), usedAI: false, aiError: 'disabled' }
   if (!takeBudget()) return { value: await fallback(), usedAI: false, aiError: 'budget' }
   try {
     return { value: await ai(), usedAI: true }
@@ -48,9 +79,16 @@ export async function withAI<T>(ai: () => Promise<T>, fallback: () => T | Promis
   }
 }
 
-export function getClient(): Anthropic {
-  if (!client) client = new Anthropic({ timeout: 45_000, maxRetries: 1 })
-  return client
+export function makeClient(apiKey: string): Anthropic {
+  return new Anthropic({ apiKey, timeout: 45_000, maxRetries: 1 })
+}
+
+/** Client et modèle à jour des réglages (le client est recréé si la clé change). */
+export async function getClient(): Promise<{ client: Anthropic; model: string }> {
+  const { apiKey, model } = await getAIConfig()
+  if (!apiKey) throw new Error('Aucune clé d’API IA configurée')
+  if (!client || client.apiKey !== apiKey) client = { apiKey, instance: makeClient(apiKey) }
+  return { client: client.instance, model }
 }
 
 type Effort = 'low' | 'medium' | 'high'
@@ -65,8 +103,9 @@ function textOf(content: Anthropic.Beta.BetaContentBlock[]): string {
 
 /** Génération de texte libre (courrier, synthèse). */
 export async function generateText(opts: { system: string; prompt: string; effort?: Effort }): Promise<string> {
-  const response = await getClient().beta.messages.create({
-    model: AI_MODEL,
+  const { client, model } = await getClient()
+  const response = await client.beta.messages.create({
+    model,
     max_tokens: 16000,
     ...FALLBACK,
     output_config: { effort: opts.effort ?? 'medium' },
@@ -84,8 +123,9 @@ export async function generateJSON<T extends z.ZodType>(opts: {
   schema: T
   effort?: Effort
 }): Promise<z.infer<T>> {
-  const response = await getClient().beta.messages.parse({
-    model: AI_MODEL,
+  const { client, model } = await getClient()
+  const response = await client.beta.messages.parse({
+    model,
     max_tokens: 16000,
     ...FALLBACK,
     output_config: { effort: opts.effort ?? 'low', format: betaZodOutputFormat(opts.schema) },
