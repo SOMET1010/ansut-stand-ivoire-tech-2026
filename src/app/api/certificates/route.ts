@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
+import { requireUser } from '@/lib/stand'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
 
@@ -154,9 +155,13 @@ export async function POST(request: NextRequest) {
 
 // GET /api/certificates - Récupérer les certificats (avec filtres)
 export async function GET(request: NextRequest) {
+  const user = await requireUser()
+  if (user instanceof NextResponse) return user
   try {
     const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
+    const isStaff = user.role === 'ADMIN' || user.role === 'ORGANIZER'
+    // Un participant ne voit que ses propres attestations
+    const userId = isStaff ? searchParams.get('userId') : user.id
     const eventId = searchParams.get('eventId')
     const templateId = searchParams.get('templateId')
 

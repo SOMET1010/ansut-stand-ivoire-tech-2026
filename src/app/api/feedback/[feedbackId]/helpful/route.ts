@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireUser } from '@/lib/stand'
 import { db } from '@/lib/db'
 
 // POST /api/feedback/[feedbackId]/helpful - Ajouter ou supprimer un vote utile
@@ -6,10 +7,13 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ feedbackId: string }> }
 ) {
+  const sessionUser = await requireUser()
+  if (sessionUser instanceof NextResponse) return sessionUser
   try {
     const resolvedParams = await params
     const body = await request.json()
-    const { userId } = body
+    // Identité prise dans la session, jamais dans le corps de la requête
+    const userId = sessionUser.id
 
     if (!userId) {
       return NextResponse.json(
@@ -74,7 +78,6 @@ export async function GET(
           select: {
             id: true,
             name: true,
-            email: true
           }
         }
       }

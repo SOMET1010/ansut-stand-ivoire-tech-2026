@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { protectedEventResponse } from '@/lib/stand'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
@@ -155,6 +156,8 @@ export async function DELETE(
     if (!session || session.user?.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    const locked = protectedEventResponse(resolvedParams.id)
+    if (locked) return locked
 
     // Delete related data first due to foreign key constraints
     await db.$transaction([

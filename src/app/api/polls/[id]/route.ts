@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireStaff } from '@/lib/stand'
 import { db } from '@/lib/db'
 
 // GET /api/polls/[pollId] - Récupérer un sondage spécifique
@@ -66,6 +67,8 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
   try {
     const resolvedParams = await params
     const { id: pollId } = resolvedParams
@@ -138,6 +141,8 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const staff = await requireStaff()
+  if (staff instanceof NextResponse) return staff
   try {
     const resolvedParams = await params
     const { id: pollId } = resolvedParams

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireUser } from '@/lib/stand'
 import { db } from '@/lib/db'
 
 // GET /api/events/[id]/feedback - Récupérer tous les feedbacks d'un événement
@@ -37,7 +38,6 @@ export async function GET(
           select: {
             id: true,
             name: true,
-            email: true
           }
         },
         helpfulVotes: true
@@ -68,11 +68,15 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const sessionUser = await requireUser()
+  if (sessionUser instanceof NextResponse) return sessionUser
   try {
     const resolvedParams = await params
     const { id } = resolvedParams
     const body = await request.json()
-    const { userId, rating, comment, category } = body
+    // Identité prise dans la session, jamais dans le corps de la requête
+    const userId = sessionUser.id
+    const { rating, comment, category } = body
 
     if (!userId || !rating || !category) {
       return NextResponse.json(
@@ -133,7 +137,6 @@ export async function POST(
           select: {
             id: true,
             name: true,
-            email: true
           }
         },
         helpfulVotes: true

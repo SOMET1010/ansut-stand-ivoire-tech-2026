@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { db } from '@/lib/db'
+import { protectedEventResponse } from '@/lib/stand'
 
 export async function DELETE(
   request: Request,
@@ -16,6 +17,9 @@ export async function DELETE(
       { status: 401 }
     )
   }
+
+  const locked = protectedEventResponse(id)
+  if (locked) return locked
 
   try {
     // Vérifier que l'événement appartient à l'organisateur
