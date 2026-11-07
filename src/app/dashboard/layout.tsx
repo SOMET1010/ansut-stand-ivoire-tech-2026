@@ -7,7 +7,8 @@ import { useSession } from 'next-auth/react'
 import { signOut } from 'next-auth/react'
 import { toast } from '@/hooks/use-toast'
 import { cn } from '@/lib/utils'
-import { 
+import { AnsutLogo, StaffBrand, StaffSignature } from '@/components/brand/brand'
+import {
   Home, 
   Users, 
   Calendar, 
@@ -125,25 +126,15 @@ export default function DashboardLayout({
       )}
       {/* Sidebar : tiroir sur mobile, colonne fixe à partir de md */}
       <div className={cn(
-        "fixed inset-y-0 left-0 z-50 w-72 border-r bg-background transition-transform duration-300 ease-in-out",
-        "md:static md:z-auto md:translate-x-0 md:bg-muted/20 md:transition-[width]",
+        "itf-orange-rule fixed inset-y-0 left-0 z-50 w-72 border-r bg-white transition-transform duration-300 ease-in-out",
+        "md:static md:z-auto md:translate-x-0 md:transition-[width]",
         isMobileOpen ? "translate-x-0" : "-translate-x-full",
         isSidebarCollapsed ? "md:w-[72px]" : "md:w-64"
       )}>
         <div className="flex h-full flex-col">
           {/* Header */}
-          <div className="flex h-16 items-center gap-3 border-b px-3">
-            {!isSidebarCollapsed && (
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold text-sm">A</span>
-                </div>
-                <div>
-                  <h1 className="font-semibold text-lg">ANSUT · ITF 2026</h1>
-                  <p className="text-xs text-muted-foreground">Organisateur</p>
-                </div>
-              </div>
-            )}
+          <div className={cn("flex items-center gap-2 border-b px-3 py-4", isSidebarCollapsed && "flex-col")}>
+            <StaffBrand collapsed={isSidebarCollapsed} role={session.user?.role} />
             <button
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
               aria-label={isSidebarCollapsed ? 'Déplier le menu' : 'Replier le menu'}
@@ -177,8 +168,8 @@ export default function DashboardLayout({
                   <div
                     className={cn(
                       "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                      "hover:bg-muted hover:text-foreground",
-                      isActive && "bg-primary text-primary-foreground hover:bg-primary/90",
+                      "text-itf-navy hover:bg-itf-sky",
+                      isActive && "bg-itf-navy text-white hover:bg-itf-navy-deep",
                       isSidebarCollapsed && "justify-center px-2"
                     )}
                     title={isSidebarCollapsed ? item.title : undefined}
@@ -199,7 +190,7 @@ export default function DashboardLayout({
                     {!isSidebarCollapsed && (
                       <div className="flex flex-col items-start">
                         <span>{item.title}</span>
-                        <span className="text-xs text-muted-foreground font-normal">
+                        <span className={cn("text-xs font-normal", isActive ? "text-white/80" : "text-muted-foreground")}>
                           {item.description}
                         </span>
                       </div>
@@ -216,7 +207,7 @@ export default function DashboardLayout({
               "flex items-center gap-3",
               isSidebarCollapsed && "flex-col gap-2"
             )}>
-              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 shrink-0 bg-itf-navy rounded-full flex items-center justify-center">
                 <span className="text-primary-foreground text-sm font-medium">
                   {session.user?.name?.charAt(0).toUpperCase() || 'O'}
                 </span>
@@ -246,18 +237,20 @@ export default function DashboardLayout({
         </div>
       </div>
       
-      <main className="min-w-0 flex-1 overflow-auto">
+      <main className="itf-hero-bg min-w-0 flex-1 overflow-auto">
         {/* Barre mobile : ouvre le tiroir de navigation */}
-        <div className="sticky top-0 z-30 flex items-center gap-3 border-b bg-white/95 px-4 py-3 backdrop-blur md:hidden">
-          <button onClick={() => setIsMobileOpen(true)} aria-label="Ouvrir le menu" aria-expanded={isMobileOpen} className="flex h-11 w-11 items-center justify-center rounded-md border">
+        <div className="sticky top-0 z-30 flex items-center gap-3 border-b bg-white/95 px-4 py-2 backdrop-blur md:hidden">
+          <button onClick={() => setIsMobileOpen(true)} aria-label="Ouvrir le menu" aria-expanded={isMobileOpen} className="flex h-11 w-11 items-center justify-center rounded-md border text-itf-navy">
             <Menu className="h-5 w-5" />
           </button>
-          <span className="font-semibold text-itf-navy">ANSUT · ITF 2026</span>
+          <AnsutLogo className="h-8 w-auto" />
+          <span className="font-bold text-itf-navy">Stand · ITF 2026</span>
         </div>
         <div className="mx-auto max-w-[1400px] p-3 sm:p-6 md:p-10">
-          <div className="rounded-xl border bg-background p-4 shadow-sm sm:p-6 md:p-10">
+          <div className="rounded-2xl bg-white p-4 shadow-xl ring-1 ring-itf-cyan/20 sm:p-6 md:p-10">
             {children}
           </div>
+          <StaffSignature />
         </div>
       </main>
     </div>

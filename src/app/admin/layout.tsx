@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { StaffBrand, StaffSignature } from "@/components/brand/brand";
 
 import {
   Home,
@@ -85,25 +86,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Sidebar */}
         <aside
           className={cn(
-            "border-r bg-muted/20 transition-[width] duration-300 ease-in-out",
+            "itf-orange-rule border-r bg-white transition-[width] duration-300 ease-in-out",
             collapsed ? "w-[72px]" : "w-64"
           )}
           aria-label="Navigation latérale d'administration"
         >
           <div className="flex h-full flex-col">
             {/* Header */}
-            <div className="flex h-16 items-center gap-3 border-b px-3">
-              {!collapsed && (
-                <div className="flex items-center gap-2">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-                    <span className="text-sm font-bold text-primary-foreground">P</span>
-                  </div>
-                  <div className="leading-tight">
-                    <h1 className="text-lg font-semibold">ANSUT · ITF 2026</h1>
-                    <p className="text-xs text-muted-foreground">Admin</p>
-                  </div>
-                </div>
-              )}
+            <div className={cn("flex items-center gap-2 border-b px-3 py-4", collapsed && "flex-col")}>
+              <StaffBrand collapsed={collapsed} role={session?.user?.role} />
 
               <Button
                 variant="ghost"
@@ -127,8 +118,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <div
                       className={cn(
                         "group flex items-center gap-3 rounded-lg px-2 py-2 text-sm font-medium transition-colors",
-                        "hover:bg-muted hover:text-foreground",
-                        active && "bg-primary text-primary-foreground hover:bg-primary/90",
+                        "text-itf-navy hover:bg-itf-sky",
+                        active && "bg-itf-navy text-white hover:bg-itf-navy-deep",
                         collapsed && "justify-center"
                       )}
                     >
@@ -138,8 +129,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                           <div className="truncate">{item.title}</div>
                           <div
                             className={cn(
-                              "text-xs text-muted-foreground",
-                              active && "text-primary-foreground/80"
+                              "text-xs",
+                              active ? "text-white/80" : "text-muted-foreground"
                             )}
                           >
                             {item.description}
@@ -166,7 +157,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {/* User Section */}
             <div className="border-t p-3">
               <div className={cn("flex items-center gap-3", collapsed && "flex-col gap-2")}>
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-itf-navy">
                   <span className="text-xs font-medium text-primary-foreground">{initials}</span>
                 </div>
                 {!collapsed && (
@@ -196,11 +187,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </aside>
 
         {/* Content */}
-        <main className="flex-1 overflow-auto">
+        <main className="itf-hero-bg flex-1 overflow-auto">
           <div className="mx-auto max-w-[1400px] p-6 md:p-10">
-            <div className="rounded-xl border bg-background p-6 md:p-10 shadow-sm">
+            <div className="rounded-2xl bg-white p-6 shadow-xl ring-1 ring-itf-cyan/20 md:p-10">
               {children}
             </div>
+            <StaffSignature />
           </div>
         </main>
       </div>

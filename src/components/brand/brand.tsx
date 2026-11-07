@@ -47,6 +47,41 @@ export function SiteHeader({ children }: { children?: React.ReactNode }) {
   )
 }
 
+/** Libellé du rôle affiché dans les espaces équipe et admin. */
+export function staffRoleLabel(role?: string | null) {
+  return role === 'ADMIN' ? 'Direction générale' : 'Équipe du stand'
+}
+
+/** En-tête de marque des menus latéraux (espace équipe et admin). */
+export function StaffBrand({ collapsed = false, role }: { collapsed?: boolean; role?: string | null }) {
+  if (collapsed) {
+    return (
+      <Link href="/dashboard/stand" aria-label="Stand ANSUT" className="flex items-center justify-center">
+        <AnsutLogo className="h-6 w-auto" />
+      </Link>
+    )
+  }
+  return (
+    <Link href="/dashboard/stand" aria-label="Stand ANSUT · Ivoire Tech Forum 2026" className="flex min-w-0 flex-col gap-2">
+      <span className="flex items-center gap-3">
+        <AnsutLogo className="h-9 w-auto shrink-0" />
+        <span className="h-9 w-px shrink-0 bg-border" />
+        <ItfWordmark size="sm" />
+      </span>
+      <span className="text-[11px] font-semibold uppercase tracking-wider text-itf-navy/70">{staffRoleLabel(role)}</span>
+    </Link>
+  )
+}
+
+/** Signature discrète en bas des pages internes. */
+export function StaffSignature() {
+  return (
+    <p className="mt-6 text-center text-xs text-muted-foreground">
+      <span className="font-medium text-itf-navy">{EVENT.tagline}</span> · {EVENT.dates} · {EVENT.location}
+    </p>
+  )
+}
+
 export function SiteFooter() {
   return (
     <footer className="itf-orange-rule bg-white">
