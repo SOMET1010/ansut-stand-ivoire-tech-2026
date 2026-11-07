@@ -1,6 +1,6 @@
 // Agent (b) : rédaction du courrier d'invitation d'un partenaire à une séquence.
 import { db } from '@/lib/db'
-import { generateText, isAIEnabled, logAgentRun } from '@/lib/ai'
+import { generateText, logAgentRun, withAI } from '@/lib/ai'
 import { templateLetter } from '@/lib/stand'
 import { EVENT, STAND_SESSIONS } from '@/config/event'
 
@@ -24,23 +24,20 @@ export async function draftInvitation(invitationId: string) {
     pilot: inv.panel.speaker,
   }
 
-  let letter: string
-  let usedAI = false
-  if (isAIEnabled()) {
-    letter = await generateText({
-      system: SYSTEM,
-      prompt: `Informations (seules sources autorisées) :
+  const { value: letter, usedAI } = await withAI(
+    () =>
+      generateText({
+        system: SYSTEM,
+        prompt: `Informations (seules sources autorisées) :
 - Événement : ${EVENT.shortTitle}, ${EVENT.dates}, ${EVENT.location}. Thème : « ${EVENT.tagline} ».
 - Partenaire invité : ${facts.partner}${facts.contact ? ` (contact : ${facts.contact})` : ''}
 - Séquence : « ${facts.title} »
 - Date et heure : ${facts.day}, ${facts.time}
 - Lieu : ${facts.location}
 - Direction ANSUT pilote : ${facts.pilot ?? 'non précisée'}`,
-    })
-    usedAI = true
-  } else {
-    letter = templateLetter(facts)
-  }
+      }),
+    () => templateLetter(facts),
+  )
 
   const updated = await db.invitation.update({
     where: { id: inv.id },

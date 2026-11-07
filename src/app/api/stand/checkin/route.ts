@@ -13,7 +13,7 @@ const CheckinSchema = z.object({
 
 // Pointage public d'un visiteur à une séquence (QR code affiché sur le stand).
 export async function POST(request: NextRequest) {
-  if (rateLimited(`checkin:${clientIp(request.headers)}`, 200, 10 * 60 * 1000)) {
+  if (rateLimited(`checkin:${clientIp(request.headers)}`, 2000, 10 * 60 * 1000)) {
     return NextResponse.json({ error: 'Trop de pointages, réessayez dans quelques minutes' }, { status: 429 })
   }
   const parsed = CheckinSchema.safeParse(await request.json())

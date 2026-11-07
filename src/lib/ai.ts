@@ -20,8 +20,36 @@ export function isAIEnabled(): boolean {
   return Boolean(process.env.ANTHROPIC_API_KEY)
 }
 
+// Budget d'appels IA par heure (toutes routes confondues) : protège la facture si le stand
+// est très fréquenté ou si une route publique est abusée. Au-delà : mode sans IA.
+const MAX_CALLS_PER_HOUR = Number(process.env.AI_MAX_CALLS_PER_HOUR ?? 400)
+let budget = { start: Date.now(), used: 0 }
+function takeBudget(): boolean {
+  if (Date.now() - budget.start > 3600_000) budget = { start: Date.now(), used: 0 }
+  if (budget.used >= MAX_CALLS_PER_HOUR) return false
+  budget.used++
+  return true
+}
+
+export type AIOutcome<T> = { value: T; usedAI: boolean; aiError?: 'disabled' | 'budget' | 'failed' }
+
+/**
+ * Exécute un appel IA avec repli déterministe : clé absente, budget horaire atteint
+ * ou API indisponible / en erreur → fallback(), signalé par usedAI = false.
+ */
+export async function withAI<T>(ai: () => Promise<T>, fallback: () => T | Promise<T>): Promise<AIOutcome<T>> {
+  if (!isAIEnabled()) return { value: await fallback(), usedAI: false, aiError: 'disabled' }
+  if (!takeBudget()) return { value: await fallback(), usedAI: false, aiError: 'budget' }
+  try {
+    return { value: await ai(), usedAI: true }
+  } catch (error) {
+    console.error('Appel IA en échec, bascule en mode sans IA :', error instanceof Error ? error.message : error)
+    return { value: await fallback(), usedAI: false, aiError: 'failed' }
+  }
+}
+
 export function getClient(): Anthropic {
-  if (!client) client = new Anthropic()
+  if (!client) client = new Anthropic({ timeout: 45_000, maxRetries: 1 })
   return client
 }
 

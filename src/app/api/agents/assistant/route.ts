@@ -13,7 +13,10 @@ const ChatSchema = z.object({
 
 // Assistant public du stand (agent c).
 export async function POST(request: NextRequest) {
-  if (rateLimited(`assistant:${clientIp(request.headers)}`, 60, 10 * 60 * 1000)) {
+  // Tous les téléphones du salon partagent souvent la même IP : limite large par IP,
+  // limite serrée par téléphone (identifiant anonyme envoyé par la page).
+  const device = (request.headers.get('x-device-id') ?? '').slice(0, 64) || 'inconnu'
+  if (rateLimited(`assistant-ip:${clientIp(request.headers)}`, 1500, 10 * 60 * 1000) || rateLimited(`assistant-device:${device}`, 25, 10 * 60 * 1000)) {
     return NextResponse.json({ error: 'Beaucoup de questions en peu de temps : réessayez dans quelques minutes.' }, { status: 429 })
   }
   const parsed = ChatSchema.safeParse(await request.json())

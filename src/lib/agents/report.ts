@@ -1,6 +1,6 @@
 // Agent (e) : bilan quotidien du stand pour le DG.
 import { db } from '@/lib/db'
-import { generateText, isAIEnabled, logAgentRun } from '@/lib/ai'
+import { generateText, logAgentRun, withAI } from '@/lib/ai'
 import { EVENT } from '@/config/event'
 
 import type { DailyStats } from './report-types'
@@ -62,12 +62,10 @@ Appuie-toi uniquement sur les chiffres fournis ; n'en invente aucun. Si une donn
 
 export async function dailyReport(date: string) {
   const stats = await collectDailyStats(date)
-  let summary: string | null = null
-  let usedAI = false
-  if (isAIEnabled()) {
-    summary = await generateText({ system: SYSTEM, prompt: JSON.stringify(stats, null, 2), effort: 'medium' })
-    usedAI = true
-  }
+  const { value: summary, usedAI, aiError } = await withAI<string | null>(
+    () => generateText({ system: SYSTEM, prompt: JSON.stringify(stats, null, 2), effort: 'medium' }),
+    () => null,
+  )
   await logAgentRun('bilan', usedAI, { date }, { stats, summary })
-  return { stats, summary, usedAI }
+  return { stats, summary, usedAI, aiError }
 }

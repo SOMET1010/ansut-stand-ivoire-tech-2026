@@ -3,7 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { betaZodTool } from '@anthropic-ai/sdk/helpers/beta/zod'
 import { z } from 'zod'
 import { db } from '@/lib/db'
-import { AI_MODEL, FALLBACK, getClient, isAIEnabled, logAgentRun } from '@/lib/ai'
+import { AI_MODEL, FALLBACK, getClient, logAgentRun, withAI } from '@/lib/ai'
 import { publicKnowledge } from '@/lib/stand'
 import { STAND_SESSIONS } from '@/config/event'
 
@@ -50,33 +50,39 @@ function fallbackAnswer(question: string): string {
   return 'L’assistant intelligent n’est pas activé pour le moment. Consultez le programme (/program) ou adressez-vous à l’équipe présente sur le stand ANSUT.'
 }
 
+const AI_OFF_NOTICE = {
+  budget: 'L’assistant intelligent est très sollicité : réponse simplifiée.',
+  failed: 'L’assistant intelligent est momentanément indisponible : réponse simplifiée.',
+  disabled: null,
+} as const
+
 export async function runAssistant(history: ChatTurn[]) {
   const last = history[history.length - 1]?.content ?? ''
-  if (!isAIEnabled()) {
-    const answer = fallbackAnswer(last)
-    await logAgentRun('assistant', false, { question: last }, answer)
-    return { answer, usedAI: false }
-  }
-
   const messages: Anthropic.Beta.BetaMessageParam[] = history.slice(-12).map((t) => ({ role: t.role, content: t.content }))
-  const final = await getClient().beta.messages.toolRunner({
-    model: AI_MODEL,
-    max_tokens: 4000,
-    ...FALLBACK,
-    output_config: { effort: 'low' },
-    system: SYSTEM,
-    tools: [saveContact],
-    max_iterations: 3,
-    messages,
-  })
-  const answer =
-    final.stop_reason === 'refusal'
-      ? 'Je ne peux pas répondre à cette demande. L’équipe du stand reste à votre disposition.'
-      : final.content
-          .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === 'text')
-          .map((b) => b.text)
-          .join('\n')
-          .trim()
-  await logAgentRun('assistant', true, { question: last }, answer)
-  return { answer, usedAI: true }
+
+  const { value, usedAI, aiError } = await withAI(
+    async () => {
+      const final = await getClient().beta.messages.toolRunner({
+        model: AI_MODEL,
+        max_tokens: 1500,
+        ...FALLBACK,
+        output_config: { effort: 'low' },
+        system: SYSTEM,
+        tools: [saveContact],
+        max_iterations: 3,
+        messages,
+      })
+      if (final.stop_reason === 'refusal') return 'Je ne peux pas répondre à cette demande. L’équipe du stand reste à votre disposition.'
+      return final.content
+        .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === 'text')
+        .map((b) => b.text)
+        .join('\n')
+        .trim()
+    },
+    () => fallbackAnswer(last),
+  )
+  const notice = aiError ? AI_OFF_NOTICE[aiError] : null
+  const answer = notice ? `${notice} ${value}` : value
+  await logAgentRun('assistant', usedAI, { question: last.slice(0, 500), aiError }, answer)
+  return { answer, usedAI }
 }

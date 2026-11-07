@@ -4,6 +4,7 @@ import { useRef, useState } from 'react'
 import { Loader2, Send, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { voterId } from '@/components/live/use-poll'
 
 interface Turn { role: 'user' | 'assistant'; content: string }
 
@@ -36,7 +37,7 @@ export function AssistantChat() {
     try {
       const res = await fetch('/api/agents/assistant', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-device-id': voterId() },
         // Le message d'accueil local n'est pas envoyé : l'historique commence par le visiteur.
         body: JSON.stringify({ messages: next.slice(1) }),
       })
