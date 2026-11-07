@@ -35,15 +35,10 @@ type NavItem = {
 };
 
 const adminNavItems: NavItem[] = [
-  { title: "Tableau de bord", href: "/admin", description: "Vue d'ensemble et statistiques", icon: Home },
-  { title: "Gestion des utilisateurs", href: "/admin/users", description: "Gérer les comptes utilisateurs", icon: Users },
-  { title: "Gestion des événements", href: "/admin/events", description: "Administrer tous les événements", icon: Calendar },
-  { title: "Questions & Réponses", href: "/admin/qa", description: "Modérer les Q&A", icon: MessageSquare },
-  { title: "Sondages", href: "/admin/polls", description: "Gérer les sondages", icon: BarChart },
-  { title: "Certificats", href: "/admin/certificates", description: "Gérer les certificats", icon: Star },
-  { title: "Feedbacks", href: "/admin/feedbacks", description: "Analyser les feedbacks", icon: FileText },
-  { title: "Exports", href: "/admin/export", description: "Exporter des données et rapports", icon: Download },
-  { title: "Paramètres", href: "/admin/settings", description: "Configuration du système", icon: Settings },
+  { title: "Stand ANSUT", href: "/dashboard/stand", description: "Invitations, présences, bilan", icon: Home },
+  { title: "Animations", href: "/dashboard/stand/animations", description: "Quiz, nuage de mots, sondages", icon: BarChart },
+  { title: "Utilisateurs", href: "/admin/users", description: "Comptes de l'équipe", icon: Users },
+  { title: "Événements", href: "/admin/events", description: "Tous les événements et panels", icon: Calendar },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

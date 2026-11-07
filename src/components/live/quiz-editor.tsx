@@ -62,7 +62,7 @@ export function QuizEditor({ onCreated }: { onCreated: () => void }) {
   return (
     <div className="space-y-4 rounded-2xl border bg-white p-4">
       <div className="flex flex-wrap gap-2">
-        <Input value={theme} onChange={(e) => setTheme(e.target.value)} placeholder="Thème pour l’agent IA (ex. : cybersécurité, programme du stand)" className="flex-1" />
+        <Input value={theme} onChange={(e) => setTheme(e.target.value)} placeholder="Thème pour l’agent IA (ex. : cybersécurité, programme du stand)" className="min-w-[14rem] flex-1" />
         <Button variant="outline" onClick={generate} disabled={busy !== null || theme.trim().length < 3}>
           {busy === 'gen' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4 text-itf-orange" />} Générer 5 questions
         </Button>
