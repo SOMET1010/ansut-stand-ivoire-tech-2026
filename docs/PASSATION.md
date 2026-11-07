@@ -129,7 +129,7 @@ ORGANIZER_EMAIL=… ORGANIZER_PASSWORD=… DG_EMAIL=… DG_PASSWORD=… TOP_QUES
 6. Charger les **contacts e-mail** des partenaires dans la matrice (vides aujourd'hui) pour que « Ouvrir dans ma messagerie » soit utile.
 7. Répétition générale sur le Wi-Fi du stand avec 20–30 téléphones (l'interrogation toutes les secondes est légère mais non testée à cette échelle).
 
-**Audit 2026-11 — top 10 corrigé** (branche `fix/audit-top10`, test `e2e/securite.e2e.cjs`, 43 contrôles) :
+**Audit 2026-11 — top 10 corrigé** (branche `fix/audit-top10`, test `e2e/securite.e2e.cjs`, 44 contrôles) :
 escalade organisateur → ADMIN, écritures héritées sans connexion, identité prise dans la session, fuites d'e-mails,
 triche au quiz, accès du DG (`/admin` → `/dashboard/stand`, pages fictives retirées), menu mobile en tiroir,
 événement du stand non supprimable, questions du public depuis `/program`, consentement facultatif,
