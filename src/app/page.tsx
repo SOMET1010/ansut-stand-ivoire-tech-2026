@@ -101,7 +101,7 @@ export default function Home() {
       <section className="itf-band px-4 py-14 text-white">
         <div className="container mx-auto grid gap-8 md:grid-cols-3">
           {[
-            { icon: MessageSquare, title: 'Questions en direct', text: 'Posez vos questions aux intervenants pendant les causeries et panels.' },
+            { icon: MessageSquare, title: 'Questions en direct', text: 'Depuis le programme, posez vos questions aux intervenants de chaque causerie ou panel.' },
             { icon: BarChart3, title: 'Sondages interactifs', text: 'Donnez votre avis et suivez les résultats en temps réel.' },
             { icon: Award, title: 'Attestation de visite', text: 'Recevez votre attestation de participation au stand ANSUT.' },
           ].map(({ icon: Icon, title, text }) => (
