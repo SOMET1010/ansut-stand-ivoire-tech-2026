@@ -1,7 +1,8 @@
-// Comptes créés au déploiement à partir des variables d'environnement (jamais de mot de passe dans le code).
-//   DG_EMAIL / DG_PASSWORD            → compte ADMIN (DG : valide les courriers)
-//   ORGANIZER_EMAIL / ORGANIZER_PASSWORD → compte équipe (créé par seed-itf2026.ts)
-// Le mot de passe du DG est resynchronisé à chaque déploiement : la variable Vercel fait foi.
+// Compte DG initial, créé au premier déploiement à partir des variables d'environnement.
+//   DG_EMAIL / DG_PASSWORD → compte ADMIN (le DG valide les courriers)
+// Sécurité : si le compte existe déjà, RIEN n'est modifié (ni mot de passe, ni rôle).
+// Un déploiement ne réinitialise donc jamais le mot de passe du DG. Pour le changer
+// volontairement : scripts/create-user.ts (USER_EMAIL / USER_PASSWORD / USER_ROLE=ADMIN).
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
@@ -9,18 +10,20 @@ const prisma = new PrismaClient()
 
 async function main() {
   const { DG_EMAIL: email, DG_PASSWORD: password } = process.env
-  if (!email || !password) {
-    console.log('DG_EMAIL / DG_PASSWORD absents : aucun compte DG créé')
+  if (!email) {
+    console.log('DG_EMAIL absent : aucun compte DG à créer')
     return
   }
-  if (password.length < 12) throw new Error('DG_PASSWORD trop court (12 caractères minimum)')
-  const passwordHash = await bcrypt.hash(password, 10)
-  await prisma.user.upsert({
-    where: { email },
-    update: { role: 'ADMIN', passwordHash },
-    create: { email, role: 'ADMIN', passwordHash, name: 'Direction générale' },
+  const existing = await prisma.user.findUnique({ where: { email } })
+  if (existing) {
+    console.log(`Compte DG ${email} déjà présent : inchangé (aucune réinitialisation)`)
+    return
+  }
+  if (!password || password.length < 12) throw new Error('DG_PASSWORD requis (12 caractères minimum) pour créer le compte DG')
+  await prisma.user.create({
+    data: { email, role: 'ADMIN', passwordHash: await bcrypt.hash(password, 10), name: 'Direction générale' },
   })
-  console.log(`OK : compte DG ${email}`)
+  console.log(`OK : compte DG ${email} créé`)
 }
 
 main().catch((e) => { console.error(e.message); process.exit(1) }).finally(() => prisma.$disconnect())
