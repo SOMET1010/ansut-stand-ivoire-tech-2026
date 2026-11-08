@@ -27,3 +27,17 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run build
+
+  docker-image:
+    # Construit l'image exactement comme le pipeline Azure (accès Internet direct, paquets OS inclus)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build --target app -t ansut-stand:ci --build-arg APP_VERSION=${{ github.sha }} .
+      - run: docker build --target migrator -t ansut-stand-migrator:ci .
+      - name: Démarrage du conteneur (sonde de santé, base absente → 503 attendu)
+        run: |
+          docker run -d --name app -p 8080:8080 -e NEXTAUTH_SECRET=ci -e DATABASE_URL=postgresql://x:y@127.0.0.1:5999/z -e DIRECT_URL=postgresql://x:y@127.0.0.1:5999/z ansut-stand:ci
+          for i in $(seq 1 30); do code=$(curl -s -o /dev/null -w '%{http_code}' localhost:8080/api/health || true); [ "$code" = "503" ] && break; sleep 2; done
+          echo "health → $code"; [ "$code" = "503" ]
+          code=$(curl -s -o /dev/null -w '%{http_code}' localhost:8080/jouer); echo "/jouer → $code"; [ "$code" = "200" ]

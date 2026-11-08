@@ -1,0 +1,201 @@
+# Plateforme du stand ANSUT – Ivoire Tech Forum 2026 : CI/CD Azure DevOps → Azure App Service (conteneur).
+#
+# Chaîne : CI (lint, typage, build) → images Docker (app + migrator) dans l'ACR
+#          → migrations Prisma + données initiales (étape SÉPARÉE, avec validation)
+#          → déploiement App Service → tests de fumée HTTPS.
+#
+# Prérequis (voir docs/DEPLOIEMENT-AZURE.md) :
+#   - groupe de variables « ansut-stand-itf2026 » : DATABASE_URL, DIRECT_URL, NEXTAUTH_SECRET (secrets),
+#     ORGANIZER_EMAIL, ORGANIZER_PASSWORD, DG_EMAIL, DG_PASSWORD (secrets), ANTHROPIC_API_KEY (secret, facultatif)
+#   - environnement Azure DevOps « ansut-stand-recette » (validation manuelle avant migration)
+#   - connexions de service : registre ACR + Azure Resource Manager (valeurs ci-dessous à confirmer)
+
+trigger:
+  branches:
+    include: [main]
+
+pr: none
+
+parameters:
+  - name: ciPool
+    displayName: Pool d'agents CI
+    type: string
+    default: ANSUT-CI-POOL1
+  - name: cdPool
+    displayName: Pool d'agents CD (accès réseau à PostgreSQL)
+    type: string
+    default: ANSUT-CI-POOL
+  - name: acrConnection
+    displayName: Connexion de service Docker Registry (ACR)
+    type: string
+    default: A_DEFINIR-acr-connection
+  - name: acrLoginServer
+    displayName: Serveur de l'ACR (ex. monacr.azurecr.io)
+    type: string
+    default: A_DEFINIR.azurecr.io
+  - name: azureConnection
+    displayName: Connexion de service Azure Resource Manager
+    type: string
+    default: A_DEFINIR-arm-connection
+  - name: webAppName
+    displayName: Nom de la Web App (App Service, conteneur Linux)
+    type: string
+    default: app-ansut-stand-itf2026-recette
+  - name: resourceGroup
+    displayName: Groupe de ressources de la Web App
+    type: string
+    default: A_DEFINIR-rg
+
+variables:
+  - group: ansut-stand-itf2026
+  - name: imageTag
+    value: $(Build.BuildId)
+  - name: appImage
+    value: ${{ parameters.acrLoginServer }}/ansut-stand
+  - name: migratorImage
+    value: ${{ parameters.acrLoginServer }}/ansut-stand-migrator
+  - name: appUrl
+    value: https://${{ parameters.webAppName }}.azurewebsites.net
+
+stages:
+  # ── 1. Contrôles ─────────────────────────────────────────────────────────
+  - stage: CI
+    displayName: Contrôles (lint, typage, build)
+    jobs:
+      - job: verify
+        pool:
+          name: ${{ parameters.ciPool }}
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '20.x'
+          - script: npm ci --no-audit --no-fund
+            displayName: Installation (package-lock.json)
+          - script: npm run lint
+            displayName: Lint
+          - script: npx tsc --noEmit
+            displayName: Typage
+          - script: npm run build
+            displayName: Build (sans accès à la base)
+            env:
+              NEXTAUTH_SECRET: ci-only-not-a-secret
+              DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+              DIRECT_URL: postgresql://ci:ci@localhost:5432/ci
+
+  # ── 2. Images Docker ─────────────────────────────────────────────────────
+  - stage: Images
+    displayName: Images Docker → ACR
+    dependsOn: CI
+    jobs:
+      - job: build_push
+        pool:
+          name: ${{ parameters.ciPool }}
+        steps:
+          - task: Docker@2
+            displayName: Connexion à l'ACR
+            inputs:
+              command: login
+              containerRegistry: ${{ parameters.acrConnection }}
+          - script: |
+              set -e
+              docker build --target app --build-arg APP_VERSION=$(Build.SourceVersion) -t $(appImage):$(imageTag) .
+              docker build --target migrator -t $(migratorImage):$(imageTag) .
+              docker push $(appImage):$(imageTag)
+              docker push $(migratorImage):$(imageTag)
+            displayName: Build et push (app + migrator)
+
+  # ── 3. Migrations + données initiales (séparées de la compilation) ───────
+  - stage: Migrate
+    displayName: Migrations PostgreSQL
+    dependsOn: Images
+    jobs:
+      - deployment: migrate
+        displayName: prisma migrate deploy + seeds idempotents
+        pool:
+          name: ${{ parameters.cdPool }}
+        environment: ansut-stand-recette   # validation manuelle configurable dans Azure DevOps
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: none
+                - task: Docker@2
+                  displayName: Connexion à l'ACR
+                  inputs:
+                    command: login
+                    containerRegistry: ${{ parameters.acrConnection }}
+                # Le compte DG n'est créé qu'une fois : un redéploiement ne modifie jamais son mot de passe.
+                - script: |
+                    docker run --rm \
+                      -e DATABASE_URL -e DIRECT_URL \
+                      -e ORGANIZER_EMAIL -e ORGANIZER_PASSWORD -e DG_EMAIL -e DG_PASSWORD \
+                      $(migratorImage):$(imageTag)
+                  displayName: Migrations et seeds
+                  env:
+                    DATABASE_URL: $(DATABASE_URL)
+                    DIRECT_URL: $(DIRECT_URL)
+                    ORGANIZER_EMAIL: $(ORGANIZER_EMAIL)
+                    ORGANIZER_PASSWORD: $(ORGANIZER_PASSWORD)
+                    DG_EMAIL: $(DG_EMAIL)
+                    DG_PASSWORD: $(DG_PASSWORD)
+
+  # ── 4. Déploiement App Service ───────────────────────────────────────────
+  - stage: Deploy
+    displayName: Déploiement App Service (recette)
+    dependsOn: Migrate
+    jobs:
+      - job: deploy
+        pool:
+          name: ${{ parameters.cdPool }}
+        steps:
+          - checkout: none
+          - task: AzureAppServiceSettings@1
+            displayName: Paramètres de l'application
+            inputs:
+              azureSubscription: ${{ parameters.azureConnection }}
+              appName: ${{ parameters.webAppName }}
+              resourceGroupName: ${{ parameters.resourceGroup }}
+              appSettings: |
+                [
+                  { "name": "WEBSITES_PORT", "value": "8080", "slotSetting": false },
+                  { "name": "NEXTAUTH_URL", "value": "$(appUrl)", "slotSetting": false },
+                  { "name": "NEXTAUTH_SECRET", "value": "$(NEXTAUTH_SECRET)", "slotSetting": false },
+                  { "name": "DATABASE_URL", "value": "$(DATABASE_URL)", "slotSetting": false },
+                  { "name": "DIRECT_URL", "value": "$(DIRECT_URL)", "slotSetting": false },
+                  { "name": "ANTHROPIC_API_KEY", "value": "$(ANTHROPIC_API_KEY)", "slotSetting": false },
+                  { "name": "AI_MAX_CALLS_PER_HOUR", "value": "400", "slotSetting": false }
+                ]
+          - task: AzureWebAppContainer@1
+            displayName: Image de l'application
+            inputs:
+              azureSubscription: ${{ parameters.azureConnection }}
+              appName: ${{ parameters.webAppName }}
+              resourceGroupName: ${{ parameters.resourceGroup }}
+              containers: $(appImage):$(imageTag)
+
+  # ── 5. Tests de fumée HTTPS ──────────────────────────────────────────────
+  - stage: Smoke
+    displayName: Tests de fumée
+    dependsOn: Deploy
+    jobs:
+      - job: smoke
+        pool:
+          name: ${{ parameters.cdPool }}
+        steps:
+          - checkout: none
+          - script: |
+              set -e
+              for i in $(seq 1 30); do
+                code=$(curl -s -o /tmp/health.json -w '%{http_code}' $(appUrl)/api/health || true)
+                [ "$code" = "200" ] && break
+                echo "Santé : HTTP $code, nouvelle tentative…"; sleep 10
+              done
+              cat /tmp/health.json; echo
+              [ "$code" = "200" ] || { echo "##vso[task.logissue type=error]Santé KO"; exit 1; }
+              for path in / /program /register /jouer /assistant /auth/signin; do
+                c=$(curl -s -o /dev/null -w '%{http_code}' $(appUrl)$path)
+                echo "$path → $c"; [ "$c" = "200" ] || exit 1
+              done
+              # L'API équipe doit refuser un visiteur anonyme
+              c=$(curl -s -o /dev/null -w '%{http_code}' $(appUrl)/api/stand/sessions); echo "/api/stand/sessions (anonyme) → $c"; [ "$c" = "401" ]
+            displayName: Santé + pages publiques + accès protégé
