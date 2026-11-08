@@ -26,7 +26,7 @@ az postgres flexible-server list --query "[].{serveur:name, rg:resourceGroup, sk
 az webapp list --query "[].{app:name, rg:resourceGroup, plan:appServicePlanId}" -o table
 ```
 
-Ce qu'on cherche : **un plan App Service Linux existant avec de la capacité** (pas de nouveau coût de calcul), **l'ACR existant** (`acrtestanst` est utilisé par la plateforme de labellisation), et **un serveur PostgreSQL** existant ou une décision de base (§ 4).
+Ce qu'on cherche : **un plan App Service Linux existant avec de la capacité** (pas de nouveau coût de calcul), **l'ACR existant** de l'ANSUT, et **un serveur PostgreSQL** existant ou une décision de base (§ 4).
 
 ## 3. Mise en place (une fois l'inventaire validé)
 
