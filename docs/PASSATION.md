@@ -17,15 +17,15 @@ La plateforme PanelEvent (salon 2025, repo `akoun-dev/panelevent`) a été repri
 
 ## 2. Stack
 
-Next.js 15.5 (App Router) · React 19 · TypeScript · Tailwind 4 + shadcn/ui · Prisma 6 (**SQLite** aujourd'hui) · NextAuth 4 (identifiants e-mail / mot de passe) · SDK officiel Anthropic (`@anthropic-ai/sdk`, modèle `claude-opus-5-5`) · `qrcode`.
-Le temps réel des animations se fait par **interrogation régulière** (1 à 4 s), sans WebSocket : compatible avec Vercel. `server.ts` (Socket.IO) vient de l'ancien projet ; les nouvelles fonctions n'en ont pas besoin.
+Next.js 15.5 (App Router) · React 19 · TypeScript · Tailwind 4 + shadcn/ui · Prisma 6 (**PostgreSQL**, migrations versionnées dans `prisma/migrations/`) · NextAuth 4 (identifiants e-mail / mot de passe) · SDK officiel Anthropic (`@anthropic-ai/sdk`, modèle `claude-opus-5-5`) · `qrcode`.
+Le temps réel des animations se fait par **interrogation régulière** (1 à 4 s), sans WebSocket : compatible avec Azure App Service sans configuration WebSocket. `server.ts` (Socket.IO) vient de l'ancien projet ; les nouvelles fonctions n'en ont pas besoin.
 
 ## 3. Démarrer en local
 
 ```bash
 npm ci
 cp .env.example .env    # renseigner NEXTAUTH_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD ; ANTHROPIC_API_KEY facultatif
-npx prisma db push
+npx prisma migrate deploy          # base PostgreSQL locale (DATABASE_URL / DIRECT_URL)
 ORGANIZER_EMAIL=stand@ansut.local ORGANIZER_PASSWORD='<10+ caractères>' npm run db:seed:itf2026   # événement + 11 séquences
 npx tsx scripts/import-invitations-itf2026.ts       # partenaires : nécessite data/private/ (voir §5)
 npx tsx scripts/seed-animations-itf2026.ts          # quiz + 4 activités prêts à l'emploi
@@ -123,8 +123,8 @@ ORGANIZER_EMAIL=… ORGANIZER_PASSWORD=… DG_EMAIL=… DG_PASSWORD=… TOP_QUES
 ## 8. À faire, par priorité (forum le 11 novembre)
 
 1. **Fusionner `fix/ci-build-env`** (CI verte sur `main`) — prêt, en attente du GO.
-2. **Base PostgreSQL** (Supabase recommandé) : passer `provider = "postgresql"` dans `schema.prisma`, `DATABASE_URL`, puis `prisma migrate` (aujourd'hui `db push`, pas de migrations versionnées). SQLite ne fonctionne pas sur Vercel.
-3. **Déploiement** Vercel branché sur `main` + variables : `NEXTAUTH_SECRET`, `NEXTAUTH_URL` (URL publique), `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `DATABASE_URL`, `ANTHROPIC_API_KEY`. Lancer les 3 scripts de seed + `create-user.ts` sur la base de production. **Accord du porteur requis.**
+2. **Base PostgreSQL** : faite (migration `0001_init`). **Hébergement : Azure App Service (décision définitive)** — voir `docs/DEPLOIEMENT-AZURE.md`. Migrations et seeds : image `migrator`, étape séparée de la compilation ; compte DG créé une seule fois, jamais réinitialisé.
+3. **Déploiement Azure** via `azure-pipelines.yml` (CI → images ACR → migrations → App Service → tests de fumée).
 4. **Clé Claude** (dépense à valider) puis tester les 5 usages IA en réel.
 6. Charger les **contacts e-mail** des partenaires dans la matrice (vides aujourd'hui) pour que « Ouvrir dans ma messagerie » soit utile.
 7. Répétition générale sur le Wi-Fi du stand avec 20–30 téléphones (l'interrogation toutes les secondes est légère mais non testée à cette échelle).
@@ -135,7 +135,7 @@ triche au quiz, accès du DG (`/admin` → `/dashboard/stand`, pages fictives re
 événement du stand non supprimable, questions du public depuis `/program`, consentement facultatif,
 limites adaptées au Wi-Fi partagé + plafond par téléphone + budget IA horaire (`AI_MAX_CALLS_PER_HOUR`), repli quand l'API Claude tombe.
 
-**Backlog / dette** : mots de passe en dur dans `prisma/seed.ts` et `scripts/create-admin.ts` · rate limit en mémoire (une seule instance) · `server.ts`/Socket.IO inutilisé par les nouvelles fonctions · liens réseaux sociaux ANSUT à confirmer (non affichés) · service d'envoi d'e-mails (Resend/Twilio) si l'envoi automatique est voulu · avertissements ESLint hérités.
+**Backlog / dette** : mots de passe en dur dans `prisma/seed.ts` et `scripts/create-admin.ts` · rate limit et budget IA en mémoire : par instance App Service : garder 1 instance pour la démo (passer à Upstash/Redis si besoin) · `server.ts`/Socket.IO inutilisé par les nouvelles fonctions · liens réseaux sociaux ANSUT à confirmer (non affichés) · service d'envoi d'e-mails (Resend/Twilio) si l'envoi automatique est voulu · avertissements ESLint hérités.
 
 ## 9. Décisions prises (et pourquoi)
 
@@ -143,7 +143,7 @@ limites adaptées au Wi-Fi partagé + plafond par téléphone + budget IA horair
 |---|---|
 | Repo dédié `SOMET1010/ansut-stand-ivoire-tech-2026` | Un projet = un repo ; l'original reste intact |
 | Matrice complète hors Git | Repo public, invitations non validées par le DG |
-| Interrogation régulière au lieu de WebSocket | Fonctionne sur tout hébergement, y compris Vercel |
+| Interrogation régulière au lieu de WebSocket | Fonctionne sur tout hébergement (App Service, conteneur) |
 | Mode « sans IA » explicite | Le stand reste utilisable sans clé ; aucun faux succès affiché |
 | Validation DG obligatoire avant envoi | Courriers officiels signés par le DG |
 | Nom « Quiz Live ANSUT » | Mécanique de quiz en direct, sans reprendre de marque existante |

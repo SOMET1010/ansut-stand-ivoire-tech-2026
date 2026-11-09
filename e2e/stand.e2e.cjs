@@ -29,7 +29,7 @@ async function login(page, email, pw) {
   const s = await (await o.request.get(B + '/api/stand/sessions')).json(); ok(s.panels.length === 11, '11 séquences, rôle ' + s.role);
   const inv = s.panels[2].invitations[0];
   const d = await (await o.request.post(B + `/api/stand/invitations/${inv.id}/draft`)).json();
-  ok(d.usedAI === false && /COCOVICO/.test(d.invitation.letterDraft) && d.invitation.letterStatus === 'REDIGE', 'courrier rédigé par modèle (' + inv.partnerName + ')');
+  ok(d.usedAI === false && d.invitation.letterDraft.includes(inv.partnerName) && d.invitation.letterStatus === 'REDIGE', 'courrier rédigé par modèle (' + inv.partnerName + ')');
   ok((await o.request.patch(B + `/api/stand/invitations/${inv.id}`, { data: { dgValidation: 'VALIDE' } })).status() === 403, 'organisateur ne peut pas valider (403)');
   ok((await o.request.patch(B + `/api/stand/invitations/${inv.id}`, { data: { letterStatus: 'ENVOYE' } })).status() === 409, 'envoi refusé avant validation DG (409)');
   await o.goto(B + '/dashboard/stand'); await o.waitForSelector('text=Pitch JULÀBA'); await o.screenshot({ path: OUT + '/dash-invitations.png' });

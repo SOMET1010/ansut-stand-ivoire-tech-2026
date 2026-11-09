@@ -1,7 +1,9 @@
 // Prisma schema updated to match current application models
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // native : poste de dev ; debian-openssl-3.0.x : image Docker (node:20-bookworm-slim) sur Azure
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 model RegistrationToken {
@@ -16,8 +18,11 @@ model RegistrationToken {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  // Supabase : DATABASE_URL = pooler (port 6543, ?pgbouncer=true) pour l'application,
+  // DIRECT_URL = connexion directe (port 5432) pour les migrations.
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {

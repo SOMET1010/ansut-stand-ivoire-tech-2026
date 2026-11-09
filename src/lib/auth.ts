@@ -28,8 +28,6 @@ const checkRateLimit = async (email: string): Promise<boolean> => {
 
 interface Env {
   NEXTAUTH_SECRET: string
-  ADMIN_EMAIL: string
-  ADMIN_PASSWORD: string
   ORGANIZER_PASSWORD?: string
   ATTENDEE_PASSWORD?: string
   DEMO_PASSWORD?: string
@@ -38,11 +36,8 @@ interface Env {
 
 const env = process.env as unknown as Env
 
-const requiredEnvVars: (keyof Env)[] = [
-  'NEXTAUTH_SECRET',
-  'ADMIN_EMAIL',
-  'ADMIN_PASSWORD'
-]
+// Seule variable réellement utilisée (ADMIN_EMAIL / ADMIN_PASSWORD étaient exigées mais jamais lues).
+const requiredEnvVars: (keyof Env)[] = ['NEXTAUTH_SECRET']
 
 for (const envVar of requiredEnvVars) {
   if (!env[envVar]) {

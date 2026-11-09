@@ -1,0 +1,176 @@
+# Plateforme du stand ANSUT – Ivoire Tech Forum 2026 : CI/CD Azure DevOps → Azure App Service (Node 20, Linux).
+#
+# Chaîne : CI (lint, typage, build standalone) → migrations Prisma + seeds idempotents (étape SÉPARÉE,
+#          environnement « ansut-stand-recette ») → déploiement Kudu (zipdeploy) → tests de fumée HTTPS.
+#
+# Cible actuelle (voir docs/DEPLOIEMENT-AZURE.md §6) : Web App app-ansut-stand-itf2026 (rg-kokoman-recette),
+# base Supabase ansut-stand-itf2026. Aucun registre de conteneurs ni connexion Azure Resource Manager requis :
+# le paquet est publié par l'API Kudu avec les identifiants de publication de la Web App (secrets).
+#
+# Groupe de variables « ansut-stand-itf2026 » (PASS-Patrick-Dev) :
+#   DATABASE_URL, DIRECT_URL, NEXTAUTH_SECRET, ORGANIZER_PASSWORD, DG_PASSWORD, KUDU_USER, KUDU_PASSWORD,
+#   ANTHROPIC_API_KEY (facultatif) — tous secrets ; ORGANIZER_EMAIL, DG_EMAIL.
+# Les paramètres d'application (secrets compris) sont portés par la Web App elle-même.
+
+trigger:
+  branches:
+    include: [main]
+
+pr: none
+
+parameters:
+  - name: ciPool
+    displayName: Pool d'agents CI
+    type: string
+    default: ANSUT-BUILD-POOL
+  - name: cdPool
+    displayName: Pool d'agents CD (accès réseau à PostgreSQL)
+    type: string
+    default: ANSUT-BUILD-POOL
+  - name: webAppName
+    displayName: Nom de la Web App
+    type: string
+    default: app-ansut-stand-itf2026
+  - name: runMigrations
+    displayName: Appliquer migrations + seeds
+    type: boolean
+    default: true
+
+variables:
+  - group: ansut-stand-itf2026
+  - name: appUrl
+    value: https://${{ parameters.webAppName }}.azurewebsites.net
+  - name: scmUrl
+    value: https://${{ parameters.webAppName }}.scm.azurewebsites.net
+
+stages:
+  # ── 1. Contrôles + paquet ────────────────────────────────────────────────
+  - stage: CI
+    displayName: Contrôles et paquet (lint, typage, build)
+    jobs:
+      - job: verify
+        pool:
+          name: ${{ parameters.ciPool }}
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '20.x'
+          - script: npm ci --no-audit --no-fund
+            displayName: Installation (package-lock.json)
+          - script: npm run lint
+            displayName: Lint
+          - script: npx tsc --noEmit
+            displayName: Typage
+          - script: npm run build
+            displayName: Build standalone (sans accès à la base)
+            env:
+              NEXT_TELEMETRY_DISABLED: '1'
+              NEXTAUTH_SECRET: ci-only-not-a-secret
+              DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+              DIRECT_URL: postgresql://ci:ci@localhost:5432/ci
+          - script: |
+              set -e
+              rm -rf pkg && mkdir -p pkg/.next
+              cp -a .next/standalone/. pkg/
+              cp -a .next/static pkg/.next/static
+              cp -a public pkg/public
+              # Aucune donnée privée ni fichier d'environnement dans le paquet
+              rm -rf pkg/data/private pkg/.env*
+              cd pkg && python3 -c "import shutil; shutil.make_archive('../app','zip','.')"
+              ls -la ../app.zip
+            displayName: Paquet zip (standalone + static + public)
+          - publish: app.zip
+            artifact: app
+
+  # ── 2. Migrations + données initiales (séparées de la compilation) ───────
+  - stage: Migrate
+    displayName: Migrations PostgreSQL
+    dependsOn: CI
+    condition: and(succeeded(), eq('${{ parameters.runMigrations }}', 'true'))
+    jobs:
+      - deployment: migrate
+        displayName: prisma migrate deploy + seeds idempotents
+        pool:
+          name: ${{ parameters.cdPool }}
+        environment: ansut-stand-recette   # validation manuelle configurable dans Azure DevOps
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - task: NodeTool@0
+                  inputs:
+                    versionSpec: '20.x'
+                - script: npm ci --no-audit --no-fund
+                  displayName: Installation
+                # Le compte DG n'est créé qu'une fois : un redéploiement ne modifie jamais son mot de passe.
+                - script: npx prisma migrate deploy && npm run db:seed:prod
+                  displayName: Migrations et seeds
+                  env:
+                    DATABASE_URL: $(DATABASE_URL)
+                    DIRECT_URL: $(DIRECT_URL)
+                    ORGANIZER_EMAIL: $(ORGANIZER_EMAIL)
+                    ORGANIZER_PASSWORD: $(ORGANIZER_PASSWORD)
+                    DG_EMAIL: $(DG_EMAIL)
+                    DG_PASSWORD: $(DG_PASSWORD)
+
+  # ── 3. Déploiement App Service (Kudu zipdeploy) ──────────────────────────
+  - stage: Deploy
+    displayName: Déploiement App Service (recette)
+    dependsOn:
+      - CI
+      - Migrate
+    condition: and(in(dependencies.CI.result, 'Succeeded'), in(dependencies.Migrate.result, 'Succeeded', 'Skipped'))
+    jobs:
+      - job: deploy
+        pool:
+          name: ${{ parameters.cdPool }}
+        steps:
+          - checkout: none
+          - download: current
+            artifact: app
+          - script: |
+              set -e
+              code=$(curl -s -o /tmp/zd.out -w '%{http_code}' -u "$KUDU_USER:$KUDU_PASSWORD" \
+                -X POST "$(scmUrl)/api/zipdeploy?isAsync=true" \
+                -H 'Content-Type: application/zip' --data-binary @"$(Pipeline.Workspace)/app/app.zip")
+              echo "zipdeploy → HTTP $code"; [ "$code" = "202" ] || [ "$code" = "200" ] || exit 1
+              for i in $(seq 1 60); do
+                s=$(curl -s -u "$KUDU_USER:$KUDU_PASSWORD" "$(scmUrl)/api/deployments/latest" | python3 -c "import json,sys;d=json.load(sys.stdin);print(d.get('status'),d.get('complete'))")
+                echo "déploiement : $s"
+                case "$s" in "4 True") break ;; "3 True") echo "##vso[task.logissue type=error]Déploiement en échec"; exit 1 ;; esac
+                sleep 10
+              done
+              [ "$s" = "4 True" ]
+            displayName: Publication du paquet (Kudu)
+            env:
+              KUDU_USER: $(KUDU_USER)
+              KUDU_PASSWORD: $(KUDU_PASSWORD)
+
+  # ── 4. Tests de fumée HTTPS ──────────────────────────────────────────────
+  - stage: Smoke
+    displayName: Tests de fumée
+    dependsOn: Deploy
+    jobs:
+      - job: smoke
+        pool:
+          name: ${{ parameters.cdPool }}
+        steps:
+          - checkout: none
+          - script: |
+              set -e
+              for i in $(seq 1 30); do
+                code=$(curl -s -o /tmp/health.json -w '%{http_code}' $(appUrl)/api/health || true)
+                [ "$code" = "200" ] && break
+                echo "Santé : HTTP $code, nouvelle tentative…"; sleep 10
+              done
+              cat /tmp/health.json; echo
+              [ "$code" = "200" ] || { echo "##vso[task.logissue type=error]Santé KO"; exit 1; }
+              grep -q "$(Build.SourceVersion)" /tmp/health.json || echo "##vso[task.logissue type=warning]Version servie différente du commit (APP_VERSION non mis à jour)"
+              for path in / /program /register /jouer /assistant /auth/signin; do
+                c=$(curl -s -o /dev/null -w '%{http_code}' $(appUrl)$path)
+                echo "$path → $c"; [ "$c" = "200" ] || exit 1
+              done
+              # L'API équipe doit refuser un visiteur anonyme
+              c=$(curl -s -o /dev/null -w '%{http_code}' $(appUrl)/api/stand/sessions); echo "/api/stand/sessions (anonyme) → $c"; [ "$c" = "401" ]
+            displayName: Santé + pages publiques + accès protégé
