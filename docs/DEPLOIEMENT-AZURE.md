@@ -76,7 +76,7 @@ URL de recette attendue : `https://app-ansut-stand-itf2026-recette.azurewebsites
 
 Voie de publication utilisée : **paquet Next.js standalone déployé par Kudu (zipdeploy)**, compilé à partir du commit `9b153a3`, sans registre de conteneurs (aucun ACR ni connexion de service ARM dans le projet Azure DevOps PASS-Patrick-Dev). Migrations et seeds : appliqués sur un PostgreSQL 17 local puis rejoués dans Supabase via l'API de gestion (le conteneur de développement n'ouvre pas les ports 5432/6543). Le pipeline `azure-pipelines.yml` reste la cible pour les prochaines versions, une fois une connexion de service créée.
 
-Recette sur l'URL HTTPS (données fictives, base remise à l'état initial ensuite) : `panels` 17/17, `live` 18/18, `securite` 39/39 (10a-10c repli IA : test local uniquement, non applicable), `stand` 5 contrôles puis arrêt sur les invitations (matrice privée non importée).
+Recette sur l'URL HTTPS (données fictives, base remise à l'état initial ensuite) : `panels` 17/17, `live` 18/18, `securite` 39/39 (10a-10c repli IA : test local uniquement, non applicable), `stand` 17/17 (28 invitations importées depuis la matrice privée, hors Git ; questions de test fictives). Total : 91 contrôles réussis sur l'URL HTTPS.
 
 ## 7. Suppression après le forum (ressources `ansut-stand*` uniquement)
 
