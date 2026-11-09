@@ -1,14 +1,16 @@
-# Plateforme du stand ANSUT – Ivoire Tech Forum 2026 : CI/CD Azure DevOps → Azure App Service (conteneur).
+# Plateforme du stand ANSUT – Ivoire Tech Forum 2026 : CI/CD Azure DevOps → Azure App Service (Node 20, Linux).
 #
-# Chaîne : CI (lint, typage, build) → images Docker (app + migrator) dans l'ACR
-#          → migrations Prisma + données initiales (étape SÉPARÉE, avec validation)
-#          → déploiement App Service → tests de fumée HTTPS.
+# Chaîne : CI (lint, typage, build standalone) → migrations Prisma + seeds idempotents (étape SÉPARÉE,
+#          environnement « ansut-stand-recette ») → déploiement Kudu (zipdeploy) → tests de fumée HTTPS.
 #
-# Prérequis (voir docs/DEPLOIEMENT-AZURE.md) :
-#   - groupe de variables « ansut-stand-itf2026 » : DATABASE_URL, DIRECT_URL, NEXTAUTH_SECRET (secrets),
-#     ORGANIZER_EMAIL, ORGANIZER_PASSWORD, DG_EMAIL, DG_PASSWORD (secrets), ANTHROPIC_API_KEY (secret, facultatif)
-#   - environnement Azure DevOps « ansut-stand-recette » (validation manuelle avant migration)
-#   - connexions de service : registre ACR + Azure Resource Manager (valeurs ci-dessous à confirmer)
+# Cible actuelle (voir docs/DEPLOIEMENT-AZURE.md §6) : Web App app-ansut-stand-itf2026 (rg-kokoman-recette),
+# base Supabase ansut-stand-itf2026. Aucun registre de conteneurs ni connexion Azure Resource Manager requis :
+# le paquet est publié par l'API Kudu avec les identifiants de publication de la Web App (secrets).
+#
+# Groupe de variables « ansut-stand-itf2026 » (PASS-Patrick-Dev) :
+#   DATABASE_URL, DIRECT_URL, NEXTAUTH_SECRET, ORGANIZER_PASSWORD, DG_PASSWORD, KUDU_USER, KUDU_PASSWORD,
+#   ANTHROPIC_API_KEY (facultatif) — tous secrets ; ORGANIZER_EMAIL, DG_EMAIL.
+# Les paramètres d'application (secrets compris) sont portés par la Web App elle-même.
 
 trigger:
   branches:
@@ -20,47 +22,31 @@ parameters:
   - name: ciPool
     displayName: Pool d'agents CI
     type: string
-    default: ANSUT-CI-POOL1
+    default: ANSUT-BUILD-POOL
   - name: cdPool
     displayName: Pool d'agents CD (accès réseau à PostgreSQL)
     type: string
-    default: ANSUT-CI-POOL
-  - name: acrConnection
-    displayName: Connexion de service Docker Registry (ACR)
-    type: string
-    default: A_DEFINIR-acr-connection
-  - name: acrLoginServer
-    displayName: Serveur de l'ACR (ex. monacr.azurecr.io)
-    type: string
-    default: A_DEFINIR.azurecr.io
-  - name: azureConnection
-    displayName: Connexion de service Azure Resource Manager
-    type: string
-    default: A_DEFINIR-arm-connection
+    default: ANSUT-BUILD-POOL
   - name: webAppName
-    displayName: Nom de la Web App (App Service, conteneur Linux)
+    displayName: Nom de la Web App
     type: string
-    default: app-ansut-stand-itf2026-recette
-  - name: resourceGroup
-    displayName: Groupe de ressources de la Web App
-    type: string
-    default: A_DEFINIR-rg
+    default: app-ansut-stand-itf2026
+  - name: runMigrations
+    displayName: Appliquer migrations + seeds
+    type: boolean
+    default: true
 
 variables:
   - group: ansut-stand-itf2026
-  - name: imageTag
-    value: $(Build.BuildId)
-  - name: appImage
-    value: ${{ parameters.acrLoginServer }}/ansut-stand
-  - name: migratorImage
-    value: ${{ parameters.acrLoginServer }}/ansut-stand-migrator
   - name: appUrl
     value: https://${{ parameters.webAppName }}.azurewebsites.net
+  - name: scmUrl
+    value: https://${{ parameters.webAppName }}.scm.azurewebsites.net
 
 stages:
-  # ── 1. Contrôles ─────────────────────────────────────────────────────────
+  # ── 1. Contrôles + paquet ────────────────────────────────────────────────
   - stage: CI
-    displayName: Contrôles (lint, typage, build)
+    displayName: Contrôles et paquet (lint, typage, build)
     jobs:
       - job: verify
         pool:
@@ -76,38 +62,31 @@ stages:
           - script: npx tsc --noEmit
             displayName: Typage
           - script: npm run build
-            displayName: Build (sans accès à la base)
+            displayName: Build standalone (sans accès à la base)
             env:
+              NEXT_TELEMETRY_DISABLED: '1'
               NEXTAUTH_SECRET: ci-only-not-a-secret
               DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
               DIRECT_URL: postgresql://ci:ci@localhost:5432/ci
-
-  # ── 2. Images Docker ─────────────────────────────────────────────────────
-  - stage: Images
-    displayName: Images Docker → ACR
-    dependsOn: CI
-    jobs:
-      - job: build_push
-        pool:
-          name: ${{ parameters.ciPool }}
-        steps:
-          - task: Docker@2
-            displayName: Connexion à l'ACR
-            inputs:
-              command: login
-              containerRegistry: ${{ parameters.acrConnection }}
           - script: |
               set -e
-              docker build --target app --build-arg APP_VERSION=$(Build.SourceVersion) -t $(appImage):$(imageTag) .
-              docker build --target migrator -t $(migratorImage):$(imageTag) .
-              docker push $(appImage):$(imageTag)
-              docker push $(migratorImage):$(imageTag)
-            displayName: Build et push (app + migrator)
+              rm -rf pkg && mkdir -p pkg/.next
+              cp -a .next/standalone/. pkg/
+              cp -a .next/static pkg/.next/static
+              cp -a public pkg/public
+              # Aucune donnée privée ni fichier d'environnement dans le paquet
+              rm -rf pkg/data/private pkg/.env*
+              cd pkg && python3 -c "import shutil; shutil.make_archive('../app','zip','.')"
+              ls -la ../app.zip
+            displayName: Paquet zip (standalone + static + public)
+          - publish: app.zip
+            artifact: app
 
-  # ── 3. Migrations + données initiales (séparées de la compilation) ───────
+  # ── 2. Migrations + données initiales (séparées de la compilation) ───────
   - stage: Migrate
     displayName: Migrations PostgreSQL
-    dependsOn: Images
+    dependsOn: CI
+    condition: and(succeeded(), eq('${{ parameters.runMigrations }}', 'true'))
     jobs:
       - deployment: migrate
         displayName: prisma migrate deploy + seeds idempotents
@@ -118,18 +97,14 @@ stages:
           runOnce:
             deploy:
               steps:
-                - checkout: none
-                - task: Docker@2
-                  displayName: Connexion à l'ACR
+                - checkout: self
+                - task: NodeTool@0
                   inputs:
-                    command: login
-                    containerRegistry: ${{ parameters.acrConnection }}
+                    versionSpec: '20.x'
+                - script: npm ci --no-audit --no-fund
+                  displayName: Installation
                 # Le compte DG n'est créé qu'une fois : un redéploiement ne modifie jamais son mot de passe.
-                - script: |
-                    docker run --rm \
-                      -e DATABASE_URL -e DIRECT_URL \
-                      -e ORGANIZER_EMAIL -e ORGANIZER_PASSWORD -e DG_EMAIL -e DG_PASSWORD \
-                      $(migratorImage):$(imageTag)
+                - script: npx prisma migrate deploy && npm run db:seed:prod
                   displayName: Migrations et seeds
                   env:
                     DATABASE_URL: $(DATABASE_URL)
@@ -139,41 +114,40 @@ stages:
                     DG_EMAIL: $(DG_EMAIL)
                     DG_PASSWORD: $(DG_PASSWORD)
 
-  # ── 4. Déploiement App Service ───────────────────────────────────────────
+  # ── 3. Déploiement App Service (Kudu zipdeploy) ──────────────────────────
   - stage: Deploy
     displayName: Déploiement App Service (recette)
-    dependsOn: Migrate
+    dependsOn:
+      - CI
+      - Migrate
+    condition: and(in(dependencies.CI.result, 'Succeeded'), in(dependencies.Migrate.result, 'Succeeded', 'Skipped'))
     jobs:
       - job: deploy
         pool:
           name: ${{ parameters.cdPool }}
         steps:
           - checkout: none
-          - task: AzureAppServiceSettings@1
-            displayName: Paramètres de l'application
-            inputs:
-              azureSubscription: ${{ parameters.azureConnection }}
-              appName: ${{ parameters.webAppName }}
-              resourceGroupName: ${{ parameters.resourceGroup }}
-              appSettings: |
-                [
-                  { "name": "WEBSITES_PORT", "value": "8080", "slotSetting": false },
-                  { "name": "NEXTAUTH_URL", "value": "$(appUrl)", "slotSetting": false },
-                  { "name": "NEXTAUTH_SECRET", "value": "$(NEXTAUTH_SECRET)", "slotSetting": false },
-                  { "name": "DATABASE_URL", "value": "$(DATABASE_URL)", "slotSetting": false },
-                  { "name": "DIRECT_URL", "value": "$(DIRECT_URL)", "slotSetting": false },
-                  { "name": "ANTHROPIC_API_KEY", "value": "$(ANTHROPIC_API_KEY)", "slotSetting": false },
-                  { "name": "AI_MAX_CALLS_PER_HOUR", "value": "400", "slotSetting": false }
-                ]
-          - task: AzureWebAppContainer@1
-            displayName: Image de l'application
-            inputs:
-              azureSubscription: ${{ parameters.azureConnection }}
-              appName: ${{ parameters.webAppName }}
-              resourceGroupName: ${{ parameters.resourceGroup }}
-              containers: $(appImage):$(imageTag)
+          - download: current
+            artifact: app
+          - script: |
+              set -e
+              code=$(curl -s -o /tmp/zd.out -w '%{http_code}' -u "$KUDU_USER:$KUDU_PASSWORD" \
+                -X POST "$(scmUrl)/api/zipdeploy?isAsync=true" \
+                -H 'Content-Type: application/zip' --data-binary @"$(Pipeline.Workspace)/app/app.zip")
+              echo "zipdeploy → HTTP $code"; [ "$code" = "202" ] || [ "$code" = "200" ] || exit 1
+              for i in $(seq 1 60); do
+                s=$(curl -s -u "$KUDU_USER:$KUDU_PASSWORD" "$(scmUrl)/api/deployments/latest" | python3 -c "import json,sys;d=json.load(sys.stdin);print(d.get('status'),d.get('complete'))")
+                echo "déploiement : $s"
+                case "$s" in "4 True") break ;; "3 True") echo "##vso[task.logissue type=error]Déploiement en échec"; exit 1 ;; esac
+                sleep 10
+              done
+              [ "$s" = "4 True" ]
+            displayName: Publication du paquet (Kudu)
+            env:
+              KUDU_USER: $(KUDU_USER)
+              KUDU_PASSWORD: $(KUDU_PASSWORD)
 
-  # ── 5. Tests de fumée HTTPS ──────────────────────────────────────────────
+  # ── 4. Tests de fumée HTTPS ──────────────────────────────────────────────
   - stage: Smoke
     displayName: Tests de fumée
     dependsOn: Deploy
@@ -192,6 +166,7 @@ stages:
               done
               cat /tmp/health.json; echo
               [ "$code" = "200" ] || { echo "##vso[task.logissue type=error]Santé KO"; exit 1; }
+              grep -q "$(Build.SourceVersion)" /tmp/health.json || echo "##vso[task.logissue type=warning]Version servie différente du commit (APP_VERSION non mis à jour)"
               for path in / /program /register /jouer /assistant /auth/signin; do
                 c=$(curl -s -o /dev/null -w '%{http_code}' $(appUrl)$path)
                 echo "$path → $c"; [ "$c" = "200" ] || exit 1
