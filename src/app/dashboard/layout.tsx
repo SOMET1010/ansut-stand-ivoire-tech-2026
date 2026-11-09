@@ -18,6 +18,9 @@ import {
   FileText, 
   LogOut,
   Menu,
+  QrCode,
+  UserCog,
+  Globe,
 } from 'lucide-react'
 
 const organizerNavItems = [
@@ -30,6 +33,11 @@ const organizerNavItems = [
     title: 'Animations',
     href: '/dashboard/stand/animations',
     description: 'Quiz, nuage de mots, sondages'
+  },
+  {
+    title: 'QR codes de pointage',
+    href: '/dashboard/stand/qr',
+    description: 'Planche à imprimer pour le stand'
   },
   {
     title: 'Tableau de bord',
@@ -65,6 +73,25 @@ const organizerNavItems = [
     title: 'Feedbacks',
     href: '/dashboard/feedbacks',
     description: 'Analyser les feedbacks'
+  }
+]
+
+// Entrées supplémentaires du DG (rôle ADMIN) : gestion des comptes et de tous les événements.
+const adminNavItems = [
+  {
+    title: 'Utilisateurs',
+    href: '/admin/users',
+    description: 'Comptes de l\'équipe (DG)'
+  },
+  {
+    title: 'Tous les événements',
+    href: '/admin/events',
+    description: 'Événements et panels (DG)'
+  },
+  {
+    title: 'Site public',
+    href: '/',
+    description: 'Accueil vu par les visiteurs'
   }
 ]
 
@@ -140,7 +167,7 @@ export default function DashboardLayout({
                 </div>
                 <div>
                   <h1 className="font-semibold text-lg">ANSUT · ITF 2026</h1>
-                  <p className="text-xs text-muted-foreground">Organisateur</p>
+                  <p className="text-xs text-muted-foreground">{session.user?.role === 'ADMIN' ? 'Direction générale' : 'Équipe du stand'}</p>
                 </div>
               </div>
             )}
@@ -162,7 +189,7 @@ export default function DashboardLayout({
 
           {/* Navigation */}
           <nav className="grid gap-1 p-3">
-            {organizerNavItems.map((item) => {
+            {[...organizerNavItems, ...(session.user?.role === 'ADMIN' ? adminNavItems : adminNavItems.slice(2))].map((item) => {
               const isActive =
                 pathname === item.href ||
                 pathname === `${item.href}/` ||
@@ -170,7 +197,8 @@ export default function DashboardLayout({
                   pathname.startsWith(`${item.href}/`) &&
                   !pathname.includes('/[id]') &&
                   // un lien plus précis (ex. /dashboard/stand/animations) l'emporte
-                  !organizerNavItems.some((o) => o.href.length > item.href.length && pathname.startsWith(o.href)));
+                  !organizerNavItems.some((o) => o.href.length > item.href.length && pathname.startsWith(o.href))) &&
+                item.href !== '/';
 
               return (
                 <Link key={item.href} href={item.href}>
@@ -186,6 +214,10 @@ export default function DashboardLayout({
                     <span className="h-4 w-4">
                       {item.title === 'Stand ANSUT' && <Star className="h-4 w-4" />}
                       {item.title === 'Animations' && <Mic className="h-4 w-4" />}
+                      {item.title === 'QR codes de pointage' && <QrCode className="h-4 w-4" />}
+                      {item.title === 'Utilisateurs' && <UserCog className="h-4 w-4" />}
+                      {item.title === 'Tous les événements' && <Calendar className="h-4 w-4" />}
+                      {item.title === 'Site public' && <Globe className="h-4 w-4" />}
                       {item.title === 'Tableau de bord' && <Home className="h-4 w-4" />}
                       {item.title === 'Créer un événement' && <Calendar className="h-4 w-4" />}
                       {item.title === 'Mes événements' && <Calendar className="h-4 w-4" />}

@@ -23,7 +23,6 @@ import {
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { User, Mail, Phone, Building, Briefcase, Calendar } from 'lucide-react'
-import Link from 'next/link'
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -111,9 +110,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen itf-hero-bg">
-      <SiteHeader>
-        <Link href="/program" className="px-3 py-2 font-medium text-itf-navy hover:underline">Programme</Link>
-      </SiteHeader>
+      <SiteHeader />
 
       {/* Form Section */}
       <section className="py-12 px-4">
