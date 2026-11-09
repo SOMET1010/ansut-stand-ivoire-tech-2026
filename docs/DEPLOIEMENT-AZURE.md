@@ -61,3 +61,31 @@ URL de recette attendue : `https://app-ansut-stand-itf2026-recette.azurewebsites
 - **Une seule instance** recommandée pour la démo : la limitation de débit et le budget IA sont en mémoire.
 - **Ne rien toucher aux applications existantes** : la Web App, l'image et la base sont dédiées (`ansut-stand*`).
 - Retour arrière : redéployer l'image précédente (`AzureWebAppContainer` avec l'ancien tag) ; les migrations sont additives.
+
+## 6. Publication réalisée le 9 novembre 2026
+
+**URL de recette : https://app-ansut-stand-itf2026.azurewebsites.net** (HTTPS, `GET /api/health` → `{"status":"ok","db":"ok"}`).
+
+| Ressource | Valeur |
+|---|---|
+| Abonnement / groupe | ANSUT DSI / `rg-kokoman-recette` (seul groupe accessible ; ressources Kokoman non modifiées) |
+| Plan App Service | `asp-ansut-stand-itf2026`, Linux **B1**, 1 instance, **France Central** (West Europe sans capacité B1 ce jour) |
+| Web App | `app-ansut-stand-itf2026`, Node 20 LTS, `node server.js`, HTTPS seul, TLS 1.2, Always On, sonde `/api/health`, étiquettes `projet=ansut-stand-itf2026`, `a-supprimer-apres=2026-11-30` |
+| Base | Supabase `ansut-stand-itf2026` (eu-west-3 Paris), pooler 6543 (`DATABASE_URL`) / 5432 (`DIRECT_URL`), RLS activé sur toutes les tables (Prisma se connecte en `postgres`) |
+| Secrets | Paramètres d'application de la Web App uniquement (jamais dans Git) |
+
+Voie de publication utilisée : **paquet Next.js standalone déployé par Kudu (zipdeploy)**, compilé à partir du commit `9b153a3`, sans registre de conteneurs (aucun ACR ni connexion de service ARM dans le projet Azure DevOps PASS-Patrick-Dev). Migrations et seeds : appliqués sur un PostgreSQL 17 local puis rejoués dans Supabase via l'API de gestion (le conteneur de développement n'ouvre pas les ports 5432/6543). Le pipeline `azure-pipelines.yml` reste la cible pour les prochaines versions, une fois une connexion de service créée.
+
+Recette sur l'URL HTTPS (données fictives, base remise à l'état initial ensuite) : `panels` 17/17, `live` 18/18, `securite` 39/39 (10a-10c repli IA : test local uniquement, non applicable), `stand` 5 contrôles puis arrêt sur les invitations (matrice privée non importée).
+
+## 7. Suppression après le forum (ressources `ansut-stand*` uniquement)
+
+```bash
+# Azure : supprimer la Web App PUIS le plan (ne JAMAIS supprimer le groupe rg-kokoman-recette)
+az webapp delete -g rg-kokoman-recette -n app-ansut-stand-itf2026
+az appservice plan delete -g rg-kokoman-recette -n asp-ansut-stand-itf2026 --yes
+# Vérifier qu'il ne reste que les ressources Kokoman
+az resource list -g rg-kokoman-recette --query "[].name" -o tsv
+```
+
+Supabase : exporter si besoin (`pg_dump`), puis Dashboard → projet `ansut-stand-itf2026` → Settings → General → *Delete project* (ou *Pause project* pour garder les données sans calcul).
