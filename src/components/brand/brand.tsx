@@ -33,6 +33,16 @@ export function ItfWordmark({ size = 'lg' }: { size?: 'sm' | 'lg' }) {
   )
 }
 
+/** Mention de l'événement, secondaire : l'ANSUT reste la marque principale. */
+export function EventBadge({ size = 'sm' }: { size?: 'sm' | 'lg' }) {
+  return (
+    <span className={`inline-flex items-center gap-2 rounded-full border border-itf-navy/20 bg-white/80 font-semibold text-itf-navy ${size === 'lg' ? 'px-4 py-1.5 text-sm' : 'px-2.5 py-0.5 text-xs'}`}>
+      <span className="h-2 w-2 rounded-full bg-itf-orange" aria-hidden />
+      {EVENT.shortTitle} · {EVENT.dates}
+    </span>
+  )
+}
+
 /** En-tête commun : logo + menu public complet ; `children` = action propre à la page. */
 export function SiteHeader({ children }: { children?: React.ReactNode }) {
   return (
@@ -41,7 +51,10 @@ export function SiteHeader({ children }: { children?: React.ReactNode }) {
         <Link href="/" className="flex items-center gap-3" aria-label="Accueil">
           <AnsutLogo className="h-9 w-auto" />
           <span className="hidden h-8 w-px bg-border sm:block" />
-          <span className="hidden sm:block"><ItfWordmark size="sm" /></span>
+          <span className="hidden flex-col leading-tight sm:flex">
+            <span className="text-sm font-extrabold text-itf-navy">Stand ANSUT</span>
+            <span className="text-xs text-itf-navy/70">{EVENT.shortTitle}</span>
+          </span>
         </Link>
         <SiteNav extra={children} />
       </div>
@@ -53,7 +66,7 @@ export function SiteFooter() {
   return (
     <footer className="itf-orange-rule bg-white">
       <div className="container mx-auto flex flex-col items-center justify-between gap-3 px-4 py-6 text-sm md:flex-row">
-        <p className="font-medium text-itf-navy">{EVENT.tagline}</p>
+        <p className="font-medium text-itf-navy"><strong>ANSUT</strong> · {EVENT.organizerLong}</p>
         <p className="text-muted-foreground">
           {EVENT.dates} · {EVENT.location} ·{' '}
           <a href={EVENT.website} className="font-semibold text-itf-navy hover:underline" target="_blank" rel="noreferrer">

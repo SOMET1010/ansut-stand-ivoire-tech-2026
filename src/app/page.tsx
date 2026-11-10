@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { CalendarDays, MapPin, MessageSquare, BarChart3, Award, ArrowRight, Clock } from 'lucide-react'
-import { SiteHeader, SiteFooter, ItfWordmark, AnsutLogo } from '@/components/brand/brand'
+import { SiteHeader, SiteFooter, AnsutLogo, EventBadge } from '@/components/brand/brand'
 import { EVENT, STAND_SESSIONS, PROGRAM_DAYS } from '@/config/event'
 
 export default function Home() {
@@ -16,10 +16,13 @@ export default function Home() {
       <section className="itf-hero-bg relative overflow-hidden">
         <div className="container mx-auto grid items-center gap-10 px-4 py-14 md:grid-cols-2 md:py-20">
           <div>
-            <AnsutLogo className="mb-6 h-14 w-auto" />
-            <ItfWordmark />
-            <p className="mt-6 max-w-md text-lg text-itf-navy/80">
-              Bienvenue sur le stand de l’<strong>ANSUT</strong>. {EVENT.tagline}.
+            <AnsutLogo className="mb-6 hidden h-20 w-auto sm:block md:h-24" />
+            <EventBadge size="lg" />
+            <h1 className="mt-5 text-4xl font-extrabold leading-tight text-itf-navy md:text-6xl">
+              Bienvenue sur le stand de l’ANSUT
+            </h1>
+            <p className="mt-4 max-w-lg text-lg text-itf-navy/80">
+              {EVENT.organizerLong}. Venez découvrir nos projets au service d’un numérique accessible à tous.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button size="lg" className="bg-itf-navy hover:bg-itf-navy-deep" asChild>
@@ -40,9 +43,9 @@ export default function Home() {
               <span className="text-sm font-semibold uppercase tracking-wider">Dates</span>
             </div>
             <p className="mt-2 text-6xl font-extrabold leading-none md:text-7xl">
-              <span className="text-itf-green">11</span>
-              <span className="text-itf-navy"> - </span>
-              <span className="text-itf-cyan">13</span>
+              <span className="text-itf-navy">11</span>
+              <span className="text-itf-orange"> - </span>
+              <span className="text-itf-navy">13</span>
             </p>
             <p className="mt-1 text-2xl font-bold text-itf-navy">novembre 2026</p>
             <div className="mt-6 flex items-center gap-2 text-lg font-semibold tracking-wide">
