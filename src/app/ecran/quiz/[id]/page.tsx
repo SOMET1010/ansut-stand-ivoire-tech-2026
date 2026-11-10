@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { AnsutLogo, ItfWordmark } from '@/components/brand/brand'
+import { AnsutLogo, EventBadge } from '@/components/brand/brand'
 import { JoinBanner } from '@/components/live/join-banner'
 import { BarsView } from '@/components/live/results-view'
 import { ANSWER_STYLES } from '@/components/live/answer-style'
@@ -33,7 +33,7 @@ export default function QuizScreen() {
   return (
     <div className="itf-hero-bg flex min-h-screen flex-col p-6">
       <header className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4"><AnsutLogo className="h-12 w-auto" /><ItfWordmark size="sm" /></div>
+        <div className="flex items-center gap-4"><AnsutLogo className="h-14 w-auto" /><EventBadge /></div>
         <h1 className="text-2xl font-bold text-itf-navy">{quiz.title}</h1>
         {quiz.status !== 'LOBBY' && <JoinBanner code={quiz.code} compact />}
       </header>
