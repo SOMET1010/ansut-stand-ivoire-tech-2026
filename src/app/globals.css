@@ -142,6 +142,15 @@
   background-clip: text;
   color: transparent;
 }
+/* Logo officiel Ivoire Tech Forum : couleurs d'origine, indépendantes de la charte ANSUT */
+.itf-logo-navy { color: #2b3990; }
+.itf-logo-bg { background-color: #2b3990; }
+.itf-logo-gradient {
+  background: linear-gradient(90deg, #6cbe45, #1ea7dc);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
 .itf-hero-bg {
   background:
     radial-gradient(ellipse at 85% 15%, rgb(21 86 164 / 0.18), transparent 55%),

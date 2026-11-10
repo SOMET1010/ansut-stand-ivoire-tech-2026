@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { CalendarDays, MapPin, MessageSquare, BarChart3, Award, ArrowRight, Clock } from 'lucide-react'
-import { SiteHeader, SiteFooter, AnsutLogo, EventBadge } from '@/components/brand/brand'
+import { SiteHeader, SiteFooter, AnsutLogo, EventBadge, ItfWordmark } from '@/components/brand/brand'
 import { EVENT, STAND_SESSIONS, PROGRAM_DAYS } from '@/config/event'
 
 export default function Home() {
@@ -16,7 +16,11 @@ export default function Home() {
       <section className="itf-hero-bg relative overflow-hidden">
         <div className="container mx-auto grid items-center gap-10 px-4 py-14 md:grid-cols-2 md:py-20">
           <div>
-            <AnsutLogo className="mb-6 hidden h-20 w-auto sm:block md:h-24" />
+            <div className="mb-6 flex items-center gap-5">
+              <AnsutLogo className="hidden h-20 w-auto sm:block md:h-24" />
+              <span className="hidden h-16 w-px bg-itf-navy/20 sm:block" />
+              <ItfWordmark size="md" />
+            </div>
             <EventBadge size="lg" />
             <h1 className="mt-5 text-4xl font-extrabold leading-tight text-itf-navy md:text-6xl">
               Bienvenue sur le stand de l’ANSUT

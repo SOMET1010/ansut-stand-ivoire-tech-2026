@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { AnsutLogo, EventBadge } from '@/components/brand/brand'
+import { AnsutLogo, ItfWordmark } from '@/components/brand/brand'
 import { JoinBanner } from '@/components/live/join-banner'
 import { ResultsView, type ActivityResults } from '@/components/live/results-view'
 import { ACTIVITY_LABELS } from '@/components/live/answer-style'
@@ -25,7 +25,7 @@ export default function ActivityScreen() {
   return (
     <div className="itf-hero-bg flex min-h-screen flex-col p-6">
       <header className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4"><AnsutLogo className="h-14 w-auto" /><EventBadge /></div>
+        <div className="flex items-center gap-4"><AnsutLogo className="h-14 w-auto" /><ItfWordmark size="sm" /></div>
         <JoinBanner code={activity.code} compact />
       </header>
       <main className="mx-auto w-full max-w-6xl flex-1 py-8">
