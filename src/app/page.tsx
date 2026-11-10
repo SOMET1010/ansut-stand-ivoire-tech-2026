@@ -1,32 +1,16 @@
 "use client"
 
 import Link from 'next/link'
-import { useSession, signIn, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
-import { CalendarDays, MapPin, MessageSquare, BarChart3, Award, LogOut, ArrowRight, Clock } from 'lucide-react'
+import { CalendarDays, MapPin, MessageSquare, BarChart3, Award, ArrowRight, Clock } from 'lucide-react'
 import { SiteHeader, SiteFooter, ItfWordmark, AnsutLogo } from '@/components/brand/brand'
 import { EVENT, STAND_SESSIONS, PROGRAM_DAYS } from '@/config/event'
 
 export default function Home() {
-  const { data: session } = useSession()
-  const role = session?.user?.role as string | undefined
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
-      <SiteHeader>
-        <Link href="/program" className="hidden px-3 py-2 font-medium text-itf-navy hover:underline sm:inline">Programme</Link>
-        <Link href="/assistant" className="hidden px-3 py-2 font-medium text-itf-navy hover:underline sm:inline">Assistant</Link>
-        <Link href="/jouer" className="px-3 py-2 font-bold text-itf-orange hover:underline">Jouer</Link>
-        {role === 'ORGANIZER' && <Button variant="outline" size="sm" asChild><Link href="/dashboard">Tableau de bord</Link></Button>}
-        {role === 'ADMIN' && <Button variant="outline" size="sm" asChild><Link href="/admin">Administration</Link></Button>}
-        {session ? (
-          <Button variant="ghost" size="sm" onClick={() => signOut({ callbackUrl: '/' })}>
-            <LogOut className="mr-1 h-4 w-4" /> Déconnexion
-          </Button>
-        ) : (
-          <Button variant="ghost" size="sm" onClick={() => signIn()}>Espace équipe</Button>
-        )}
-      </SiteHeader>
+      <SiteHeader />
 
       {/* Hero */}
       <section className="itf-hero-bg relative overflow-hidden">

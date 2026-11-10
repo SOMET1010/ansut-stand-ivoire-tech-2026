@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { EVENT } from '@/config/event'
+import { SiteNav } from './site-nav'
 
 export function AnsutLogo({ className = 'h-10 w-auto' }: { className?: string }) {
   return (
@@ -32,16 +33,17 @@ export function ItfWordmark({ size = 'lg' }: { size?: 'sm' | 'lg' }) {
   )
 }
 
+/** En-tête commun : logo + menu public complet ; `children` = action propre à la page. */
 export function SiteHeader({ children }: { children?: React.ReactNode }) {
   return (
     <header className="sticky top-0 z-40 border-b bg-white/90 backdrop-blur">
-      <div className="container mx-auto flex items-center justify-between gap-4 px-4 py-3">
+      <div className="container relative mx-auto flex items-center justify-between gap-4 px-4 py-3">
         <Link href="/" className="flex items-center gap-3" aria-label="Accueil">
           <AnsutLogo className="h-9 w-auto" />
           <span className="hidden h-8 w-px bg-border sm:block" />
           <span className="hidden sm:block"><ItfWordmark size="sm" /></span>
         </Link>
-        <nav className="flex items-center gap-2 text-sm">{children}</nav>
+        <SiteNav extra={children} />
       </div>
     </header>
   )

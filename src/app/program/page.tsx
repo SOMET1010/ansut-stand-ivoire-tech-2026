@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Clock, MapPin, Users, Mic, Network, Trophy, Presentation, LogOut } from 'lucide-react'
@@ -38,11 +37,7 @@ export default function ProgramPage() {
   return (
     <div className="flex min-h-screen flex-col bg-white">
       <SiteHeader>
-        {visitor ? (
-          <Button variant="ghost" size="sm" onClick={logout}><LogOut className="mr-1 h-4 w-4" /> Quitter</Button>
-        ) : (
-          <Button size="sm" className="bg-itf-navy hover:bg-itf-navy-deep" asChild><Link href="/register">S’inscrire</Link></Button>
-        )}
+        {visitor && <Button variant="ghost" size="sm" onClick={logout}><LogOut className="mr-1 h-4 w-4" /> Quitter</Button>}
       </SiteHeader>
 
       <section className="itf-hero-bg px-4 py-10">

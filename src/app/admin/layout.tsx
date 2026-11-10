@@ -37,8 +37,11 @@ type NavItem = {
 const adminNavItems: NavItem[] = [
   { title: "Stand ANSUT", href: "/dashboard/stand", description: "Invitations, présences, bilan", icon: Home },
   { title: "Animations", href: "/dashboard/stand/animations", description: "Quiz, nuage de mots, sondages", icon: BarChart },
+  { title: "QR codes de pointage", href: "/dashboard/stand/qr", description: "Planche à imprimer pour le stand", icon: Star },
+  { title: "Questions & Réponses", href: "/dashboard/qa", description: "Modérer les questions", icon: MessageSquare },
   { title: "Utilisateurs", href: "/admin/users", description: "Comptes de l'équipe", icon: Users },
   { title: "Événements", href: "/admin/events", description: "Tous les événements et panels", icon: Calendar },
+  { title: "Site public", href: "/", description: "Accueil vu par les visiteurs", icon: Home },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
